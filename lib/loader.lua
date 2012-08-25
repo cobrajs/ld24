@@ -3,9 +3,7 @@ module(..., package.seeall)
 --
 -- Loads Tiled maps
 --
-
-require 'utils'
-require 'xml'
+require 'utils' require 'xml'
 
 function LoadMapLove(mapname)
   assert(type(love) ~= nil, 'Love2D is required for this function')
@@ -34,12 +32,57 @@ function ParseMap(parsedXML)
   for i, v in pairs(objectgroups) do
     table.insert(map.objectgroups, ParseObjectGroup(v))
   end
+  map.tileWidth = map.tilesets.images[1].tilewidth
+  map.tileHeight = map.tilesets.images[1].tileheight
   map.width = map.layers[1].width * map.tilesets.images[1].tilewidth
   map.height = map.layers[1].height * map.tilesets.images[1].tileheight
   map.FindLayer = FindLayer
   map.FindObject = FindObject
+
+  map.collides = function(self, rect)
+    local collideLayer = self.CollideLayer
+    local centerx = rect.x + rect.width / 2
+    local centery = rect.y + rect.height / 2
+    local minx = math.floor((rect.x) / self.tileWidth)
+    local miny = math.floor((rect.y) / self.tileHeight)
+    local maxx = math.floor((rect.x + rect.width) / self.tileWidth)
+    local maxy = math.floor((rect.y + rect.height) / self.tileHeight)
+    local ret = {up = 0, down = 0, left = 0, right = 0}
+    local count = {up = 0, down = 0, left = 0, right = 0}
+    for y = miny, maxy do
+      for x = minx, maxx do
+        if collideLayer.grid[y + 1][x + 1] ~= '0' then 
+          --[[
+          ret.right = gt(rect.x + rect.width - x * self.tileWidth)
+          ret.left = gt(-rect.x + x * self.tileWidth + self.tileWidth)
+          ret.down = gt(rect.y + rect.height - y * self.tileHeight)
+          ret.up = gt(-rect.y + y * self.tileHeight + self.tileHeight)
+          --]]
+          local absx = centerx - x * self.tileWidth
+          local absy = centery - y * self.tileHeight
+          if math.abs(absx) > math.abs(absy) then
+            if absx < 0 then 
+              ret.right = rect.x + rect.width - x * self.tileWidth
+            elseif 
+              absx > 0 then ret.left = rect.x - x * self.tileWidth + self.tileWidth 
+            end
+          else
+            if absy < 0 then 
+              ret.down = rect.y + rect.height - y * self.tileHeight
+            elseif 
+              absy > 0 then ret.up = rect.y - y * self.tileHeight + self.tileHeight 
+            end
+          end
+        end
+      end
+    end
+    return ret
+  end
+
   return map
 end
+
+function gt(n) return n < 0 and 0 or n end
 
 function ParseObjectGroup(objgrp)
   assert(type(objgrp) == 'table' and objgrp.label == 'objectgroup', "Passed something that is not an objectgroup")

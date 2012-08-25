@@ -17,6 +17,9 @@ require 'keyhandler'
 function love.load()
   center = {x = love.graphics.getWidth() / 2, y = love.graphics.getHeight() / 2}
   map = loader.LoadMapLove('maps/level1.tmx')
+  map.DisplayLayer = map:FindLayer('Display')
+  map.CollideLayer = map:FindLayer('Collides')
+
   camera = camera.Camera(love.graphics.getWidth() - map.width, love.graphics.getHeight() - map.height)
   for i,v in ipairs(map.tilesets.images) do
     v.image = tileset.Tileset(v.source, v.tileX, v.tileY)
@@ -30,6 +33,7 @@ end
 
 function love.update(dt)
   player:update(dt)
+  player:collide(map)
   
   camera:update(
     math.floor(-player.pos.x + center.x),
@@ -38,7 +42,7 @@ function love.update(dt)
 end
 
 function love.draw()
-  for tile, x, y in loader.tileIter(camera, map:FindLayer('Display'), map.tilesets.images[1]) do
+  for tile, x, y in loader.tileIter(camera, map.DisplayLayer, map.tilesets.images[1]) do
     local usetile = map.tilesets.tiles[tonumber(tile)]
     if usetile then
       usetile.image.image:draw(x, y, tonumber(tile))
