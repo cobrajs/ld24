@@ -55,7 +55,12 @@ function Tileset(image, xtiles, ytiles)
 end
 
 function LuaTileset(luasource)
-  local tileset = dofile(luasource)
+
+  local tileset = setfenv(loadfile(luasource), {addState = 
+    function(start, fin, len, delayLen)
+      return {start = start, fin = fin, len = len, delayLen = delayLen}
+    end
+  })()
   if type(tileset) == 'table' then
     local self = Tileset(tileset.image.source, tileset.tilesx, tileset.tilesy)
     self.anims = tileset.anims

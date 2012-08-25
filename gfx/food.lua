@@ -1,7 +1,3 @@
-local function addState(start, fin, len, delayLen)
-  return {start = start, fin = fin, len = len, delayLen = delayLen}
-end
-
 return {
   tilesx = 8, tilesy = 8,
   image = {source = "gfx/collects.png", width = 128, height = 128},

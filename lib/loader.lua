@@ -51,7 +51,7 @@ function ParseMap(parsedXML)
     end
   end
 
-  map.collides = function(self, rect, dir)
+  map.collides = function(self, rect, dir, debug)
     local blank = '1'
     local collideLayer = self.CollideLayer
     local ignoreCorners = rect.width >= self.tileWidth * 2
@@ -201,6 +201,7 @@ function ParseTilesets(tilesets)
     local img = {}
     utils.CopyXargs(img, image.xarg)
     utils.CopyXargs(img, v.xarg)
+    img.firstgid = gid
     img.trans = utils.RGBToTable(img.trans)
     img.tileX, img.tileY = img.width/img.tilewidth, img.height/img.tileheight
     for y=1,img.tileY do

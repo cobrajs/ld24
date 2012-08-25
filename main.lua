@@ -8,13 +8,21 @@
 -- Make it so I can store libraries in the lib folder
 package.path = package.path .. ';./lib/?.lua'
 require 'animated'
-require 'player'
 require 'loader'
 require 'camera'
 require 'utils'
 require 'keyhandler'
 require 'logger'
 
+------------------------------------------------------------
+-- Game objects
+--
+require 'player'
+require 'enemy'
+require 'item'
+
+------------------------------------------------------------
+-- Load function
 function love.load()
   global = {
     center = {x = love.graphics.getWidth() / 2, y = love.graphics.getHeight() / 2},
@@ -37,7 +45,22 @@ function love.load()
 
   global.map.DisplayLayer = global.map:FindLayer('Display')
   global.map.CollideLayer = global.map:FindLayer('Collides')
+  global.map.CollectsLayer = global.map:FindLayer('Collects')
   love.graphics.setLine(1, 'rough')
+
+  global.blue = enemy.BlueEnemy(global, 20, 20)
+
+
+  global.items = 0
+  --[[
+  for tile, x, y in loader.tileIter(global.camera, global.map.CollectsLayer, global.map.tilesets.images[2]) do
+    local usetile = global.map.tilesets.tiles[tonumber(tile)]
+    if usetile then
+      usetile.image.image:draw(x, y, tonumber(1 + tile - global.map.tilesets.images[2].firstgid))
+    end
+  end
+  --]]
+
 end
 
 function love.update(dt)
@@ -46,6 +69,9 @@ function love.update(dt)
 
   global.keyhandle:updateTimes(dt)
   
+  global.blue:update(dt)
+  global.blue:collide(global.map)
+
   global.camera:update(
     math.floor(-global.player.pos.x + global.center.x),
     math.floor(-global.player.pos.y + global.center.y)
@@ -57,12 +83,12 @@ function love.draw()
     local usetile = global.map.tilesets.tiles[tonumber(tile)]
     if usetile then
       usetile.image.image:draw(x, y, tonumber(tile))
-      --love.graphics.line(x, y, x + global.map.tileWidth, y)
-      --love.graphics.line(x, y, x, y + global.map.tileHeight)
     end
   end
 
-  global.player:draw(global.camera:drawPos(global.player.pos.x, global.player.pos.y))
+  global.player:draw(global.camera:drawPlayer(global.player.pos.x, global.player.pos.y))
+
+  global.blue:draw(global.camera:drawOther(global.blue.rect.x, global.blue.rect.y))
 
   --global.logger:draw()
 end

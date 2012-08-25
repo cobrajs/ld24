@@ -23,10 +23,16 @@ function Camera(maxWidth, maxHeight)
     if self.y < self.maxy then self.y = self.maxy end
   end
 
-  self.drawPos = function(self, x, y)
+  self.drawPlayer = function(self, x, y)
     return
       self.x >= self.minx and x or self.x <= self.maxx and self.maxx + x or self.center.x, 
       self.y >= self.miny and y or self.y <= self.maxy and self.maxy + y or self.center.y
+  end
+
+  self.drawOther = function(self, x, y)
+    return 
+      x + self.x,
+      y + self.y
   end
 
   return self
