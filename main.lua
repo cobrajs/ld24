@@ -43,6 +43,8 @@ end
 function love.update(dt)
   global.player:update(dt)
   global.player:collide(global.map)
+
+  global.keyhandle:updateTimes(dt)
   
   global.camera:update(
     math.floor(-global.player.pos.x + global.center.x),
@@ -55,14 +57,14 @@ function love.draw()
     local usetile = global.map.tilesets.tiles[tonumber(tile)]
     if usetile then
       usetile.image.image:draw(x, y, tonumber(tile))
-      love.graphics.line(x, y, x + global.map.tileWidth, y)
-      love.graphics.line(x, y, x, y + global.map.tileHeight)
+      --love.graphics.line(x, y, x + global.map.tileWidth, y)
+      --love.graphics.line(x, y, x, y + global.map.tileHeight)
     end
   end
 
   global.player:draw(global.camera:drawPos(global.player.pos.x, global.player.pos.y))
 
-  global.logger:draw()
+  --global.logger:draw()
 end
 
 function love.keypressed(key)
@@ -70,4 +72,9 @@ function love.keypressed(key)
     love.event.push('quit')
   end
   global.player:handleKeyPress(global.keyhandle.keys, key)
+  global.keyhandle:update(key, true)
+end
+
+function love.keyreleased(key)
+  global.keyhandle:update(key, false)
 end

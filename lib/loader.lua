@@ -52,9 +52,9 @@ function ParseMap(parsedXML)
   end
 
   map.collides = function(self, rect, dir)
+    local blank = '1'
     local collideLayer = self.CollideLayer
-    local centerx = rect.x + rect.width / 2
-    local centery = rect.y + rect.height / 2
+    local ignoreCorners = rect.width >= self.tileWidth * 2
     local minx = math.floor((rect.x) / self.tileWidth)
     local miny = math.floor((rect.y) / self.tileHeight)
     local maxx = math.floor((rect.x + rect.width) / self.tileWidth)
@@ -63,36 +63,112 @@ function ParseMap(parsedXML)
     local count = {up = 0, down = 0, left = 0, right = 0}
     for y = miny, maxy do
       for x = minx, maxx do
-        if collideLayer.grid[y + 1][x + 1] ~= '0' and not ((x == minx and y == miny) or (x == minx and y == maxy) or (x == maxx and y == miny) or (x == maxx and y == maxy)) then 
-          local side = 
-            y == miny and 'up' or
-            y == maxy and 'down' or
-            x == minx and 'left' or
-            x == maxx and 'right' or nil
+        if collideLayer.grid[y + 1][x + 1] ~= blank and (not ignoreCorners or not ((x == minx and y == miny) or (x == minx and y == maxy) or (x == maxx and y == miny) or (x == maxx and y == maxy))) then 
+          --local isCorner = (x == minx and y == miny) or (x == minx and y == maxy) or (x == maxx and y == miny) or (x == maxx and y == maxy)
+          --if ignoreCorners or not isCorner then
+            local side = 
+              y == miny and 'up' or
+              y == maxy and 'down' or
+              x == minx and 'left' or
+              x == maxx and 'right' or nil
 
-          if side then
-            ret[side] = getFrom(side, rect, x, y, self.tileWidth, self.tileHeight)
-            count[side] = count[side] + 1
+            if side then
+              ret[side] = getFrom(side, rect, x, y, self.tileWidth, self.tileHeight)
+              count[side] = count[side] + 1
+              --print(side, x, y)
+            end
+            --[[
+          else
+            if x == minx and y == miny then
+              ret.up = getFrom('up', rect, x, y, self.tileWidth, self.tileHeight)
+              count.up = count.up + 1
+              ret.left = getFrom('left', rect, x, y, self.tileWidth, self.tileHeight)
+              count.left = count.left + 1
+            elseif x == minx and y == maxy then
+              ret.down = getFrom('down', rect, x, y, self.tileWidth, self.tileHeight)
+              count.down = count.down + 1
+              ret.left = getFrom('left', rect, x, y, self.tileWidth, self.tileHeight)
+              count.left = count.left + 1
+            elseif x == maxx and y == miny then
+              ret.up = getFrom('up', rect, x, y, self.tileWidth, self.tileHeight)
+              count.up = count.up + 1
+              ret.right = getFrom('right', rect, x, y, self.tileWidth, self.tileHeight)
+              count.right = count.right + 1
+            elseif x == maxx and y == maxy then
+              ret.down = getFrom('down', rect, x, y, self.tileWidth, self.tileHeight)
+              count.down = count.down + 1
+              ret.right = getFrom('right', rect, x, y, self.tileWidth, self.tileHeight)
+              count.right = count.right + 1
+            end
           end
-
+          --]]
         end
       end
     end
-    --[[
+
+    if ignoreCorners then
+      -- Top Left Block
+      local x, y = minx, miny
+      if collideLayer.grid[y + 1][x + 1] ~= blank then
+        if count.left > count.up then 
+          ret.left = getFrom('left', rect, x, y, self.tileWidth, self.tileHeight)
+        elseif count.left < count.up then
+          ret.up = getFrom('up', rect, x, y, self.tileWidth, self.tileHeight)
+        else
+          ret.left = getFrom('left', rect, x, y, self.tileWidth, self.tileHeight)
+          ret.up = getFrom('up', rect, x, y, self.tileWidth, self.tileHeight)
+        end
+      end
+      -- Bottom Left Block
+      x, y = minx, maxy
+      if collideLayer.grid[y + 1][x + 1] ~= blank then
+        if count.left > count.down then 
+          ret.left = getFrom('left', rect, x, y, self.tileWidth, self.tileHeight)
+        elseif count.left < count.down then
+          ret.down = getFrom('down', rect, x, y, self.tileWidth, self.tileHeight)
+        else
+          ret.left = getFrom('left', rect, x, y, self.tileWidth, self.tileHeight)
+          ret.down = getFrom('down', rect, x, y, self.tileWidth, self.tileHeight)
+        end
+      end
+      -- Top Right Block
+      x, y = maxx, miny
+      if collideLayer.grid[y + 1][x + 1] ~= blank then
+        if count.right > count.up then 
+          ret.right = getFrom('right', rect, x, y, self.tileWidth, self.tileHeight)
+        elseif count.right < count.up then
+          ret.up = getFrom('up', rect, x, y, self.tileWidth, self.tileHeight)
+        else
+          ret.right = getFrom('right', rect, x, y, self.tileWidth, self.tileHeight)
+          ret.up = getFrom('up', rect, x, y, self.tileWidth, self.tileHeight)
+        end
+      end
+      -- Bottom Right Block
+      x, y = maxx, maxy
+      if collideLayer.grid[y + 1][x + 1] ~= blank then
+        if count.right > count.down then 
+          ret.right = getFrom('right', rect, x, y, self.tileWidth, self.tileHeight)
+        elseif count.right < count.down then
+          ret.down = getFrom('down', rect, x, y, self.tileWidth, self.tileHeight)
+        else
+          ret.right = getFrom('right', rect, x, y, self.tileWidth, self.tileHeight)
+          ret.down = getFrom('down', rect, x, y, self.tileWidth, self.tileHeight)
+        end
+      end
+    else
+      local hori = count.left + count.right
+      local vert = count.up + count.down
+      --print(hori, vert)
+      if hori == 1 and count.up == 1 and count.down == 1 then ret.up, ret.down = 0, 0 end
+      --if math.max(count.left, count.right) > 1 and math.max(count.up, count.down) <= 1 then
+        --ret.up, ret.down = 0
+      --end
+    end
+
     if ret.left > 0 and dir.x >= 0 then ret.left = 0 end
     if ret.right > 0 and dir.x <= 0 then ret.right = 0 end
     if ret.up > 0 and dir.y >= 0 then ret.up = 0 end
     if ret.down > 0 and dir.y <= 0 then ret.down = 0 end
-    --]]
-
-    if collideLayer.grid[miny + 1][minx + 1] ~= '0'
-      if count.left > count.up then 
-        ret.left = getFrom('left', rect, x, y, self.tileWidth, self.tileHeight)
-      elseif
-        ret.up = getFrom('up', rect, x, y, self.tileWidth, self.tileHeight)
-      end
-      --]]
-
 
     return ret, count
   end
