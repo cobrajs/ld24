@@ -9,8 +9,8 @@ function Rect(x, y, width, height)
   self.width = width
   self.height = height
 
-  self.draw = function(self, state)
-    love.graphics.rectangle(state, self.x, self.y, self.width, self.height)
+  self.draw = function(self, state, x, y)
+    love.graphics.rectangle(state, x or self.x, y or self.y, self.width, self.height)
   end
 
   return self

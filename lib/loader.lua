@@ -39,7 +39,19 @@ function ParseMap(parsedXML)
   map.FindLayer = FindLayer
   map.FindObject = FindObject
 
-  map.collides = function(self, rect)
+  local getFrom = function(side, rect, x, y, width, height)
+    if side == 'up' then
+      return -rect.y + y * height + height
+    elseif side == 'down' then
+      return rect.y + rect.height - y * height
+    elseif side == 'left' then
+      return -rect.x + x * width + width
+    elseif side == 'right' then
+      return rect.x + rect.width - x * width
+    end
+  end
+
+  map.collides = function(self, rect, dir)
     local collideLayer = self.CollideLayer
     local centerx = rect.x + rect.width / 2
     local centery = rect.y + rect.height / 2
@@ -51,32 +63,38 @@ function ParseMap(parsedXML)
     local count = {up = 0, down = 0, left = 0, right = 0}
     for y = miny, maxy do
       for x = minx, maxx do
-        if collideLayer.grid[y + 1][x + 1] ~= '0' then 
-          --[[
-          ret.right = gt(rect.x + rect.width - x * self.tileWidth)
-          ret.left = gt(-rect.x + x * self.tileWidth + self.tileWidth)
-          ret.down = gt(rect.y + rect.height - y * self.tileHeight)
-          ret.up = gt(-rect.y + y * self.tileHeight + self.tileHeight)
-          --]]
-          local absx = centerx - x * self.tileWidth
-          local absy = centery - y * self.tileHeight
-          if math.abs(absx) > math.abs(absy) then
-            if absx < 0 then 
-              ret.right = rect.x + rect.width - x * self.tileWidth
-            elseif 
-              absx > 0 then ret.left = rect.x - x * self.tileWidth + self.tileWidth 
-            end
-          else
-            if absy < 0 then 
-              ret.down = rect.y + rect.height - y * self.tileHeight
-            elseif 
-              absy > 0 then ret.up = rect.y - y * self.tileHeight + self.tileHeight 
-            end
+        if collideLayer.grid[y + 1][x + 1] ~= '0' and not ((x == minx and y == miny) or (x == minx and y == maxy) or (x == maxx and y == miny) or (x == maxx and y == maxy)) then 
+          local side = 
+            y == miny and 'up' or
+            y == maxy and 'down' or
+            x == minx and 'left' or
+            x == maxx and 'right' or nil
+
+          if side then
+            ret[side] = getFrom(side, rect, x, y, self.tileWidth, self.tileHeight)
+            count[side] = count[side] + 1
           end
+
         end
       end
     end
-    return ret
+    --[[
+    if ret.left > 0 and dir.x >= 0 then ret.left = 0 end
+    if ret.right > 0 and dir.x <= 0 then ret.right = 0 end
+    if ret.up > 0 and dir.y >= 0 then ret.up = 0 end
+    if ret.down > 0 and dir.y <= 0 then ret.down = 0 end
+    --]]
+
+    if collideLayer.grid[miny + 1][minx + 1] ~= '0'
+      if count.left > count.up then 
+        ret.left = getFrom('left', rect, x, y, self.tileWidth, self.tileHeight)
+      elseif
+        ret.up = getFrom('up', rect, x, y, self.tileWidth, self.tileHeight)
+      end
+      --]]
+
+
+    return ret, count
   end
 
   return map
