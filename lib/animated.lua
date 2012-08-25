@@ -14,33 +14,57 @@ function Animated(tilesetFile)
   self.width = self.image.tilewidth
   self.height = self.image.tileheight
 
-  self.animPos = 1
-  self.animState = 0
-  self.animDelay = 0
-  self.anim = self.image.anims.stand
+  self.currentAnim = {anim = '', dir = ''}
+  self.current = nil
 
-  self.changeAnim = function(state, dir, reset) 
+  self.anims = self.image.anims
+  for k, v in pairs(self.anims) do
+    if self.currentAnim.anim == '' then 
+      self.currentAnim.anim = k
+    end
 
+    for d, anim in pairs(v) do 
+      if self.currentAnim.dir == '' then 
+        self.currentAnim.dir = d
+        self.current = self.anims[self.currentAnim.anim][self.currentAnim.dir]
+      end
+      anim.pos = anim.start
+      anim.state = 0
+      anim.delay = 0
+      anim.origDelay = anim.delayLen
+    end
+  end
+
+  self.changeAnim = function(self, state, dir, reset) 
+    self.currentAnim.anim, self.currentAnim.dir = utils.coalesce(state, self.currentAnim.anim), utils.coalesce(dir, self.currentAnim.dir)
+    self.current = self.anims[self.currentAnim.anim][self.currentAnim.dir]
+    if reset then
+      self.current.pos, self.current.state, self.current.delay = self.current.start, 0, 0
+    end
+  end
+
+  self.modifyDelay = function(self, factor)
+    self.current.delayLen = self.current.origDelay * factor
   end
 
   self.update = function(self, dt)
-    if self.vel.x ~= 0 then
-      if love.timer.getTime() - self.animDelay > 1 / math.abs(self.vel.x) then
-        self.animState = self.animState > 0 and 0 or self.animState + 1
-        self.animDelay = love.timer.getTime()
-      end
-      self.animPos = self.vel.x > 0 and self.anim.right.start or self.anim.left.start
+    self.current.delay = self.current.delay + dt
+    if self.current.delay > self.current.delayLen then
+      self.current.delay = 0
+      self.current.pos = animWrap(self.current.pos + 1, self.current.start, self.current.fin)
     end
-    self.pos:add(self.vel)
   end
 
   self.draw = function(self, x, y)
-    self.image:draw(x or self.pos.x, y or self.pos.y, self.animPos + self.animState)
+    self.image:draw(x, y, self.current.pos)
   end
 
   return self
 end
 
-local function AnimState()
-  return {pos = 1, state = 0, delay = 0}
+function animWrap(number, min, max)
+  if number > max then return min
+  elseif number < min then return max
+  end
+  return number
 end

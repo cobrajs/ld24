@@ -103,12 +103,19 @@ end
 --
 -- Wrap a number from 0 to max
 --
-function wrap(number, max) 
-  return number > max and number - max or number < 0 and number + max or number
+--function wrap(number, max) 
+  --return number > max and number - max or number < 0 and number + max or number
+--end
+
+function wrap(number, min, max)
+  if number > max then return number - max
+  elseif number < min then return number + max
+  end
+  return number
 end
 
 function wrapAng(number)
-  return wrap(number, 360)
+  return wrap(number, 0, 360)
 end
 
 --
@@ -164,3 +171,15 @@ function addSupers(classInstance, overrides)
   end
 end
 
+--
+-- Hey, I use it a ton in Oracle
+--
+function coalesce(...) 
+  local t = {...}
+  for i=1,#t do if t[i] then return t[i] end end 
+end
+
+
+function printTable(t)
+  for k,v in pairs(t) do print(k,v) end
+end

@@ -4,6 +4,7 @@ require 'utils'
 require 'vector'
 require 'tileset'
 require 'shapes'
+require 'animated'
 
 function Player(startx, starty)
   local self = {}
@@ -12,15 +13,11 @@ function Player(startx, starty)
   self.vel = vector.Vector:new(0, 0)
 
   -- Animation vars
-  --self.image = tileset.Tileset('gfx/player.png', 2, 2)
-  self.image = tileset.XMLTileset('gfx/player_tiles.xml')
-  self.width = self.image.tilewidth
-  self.height = self.image.tileheight
+  self.anim = animated.Animated('gfx/player_tiles.lua')
+  self.width = self.anim.image.tilewidth
+  self.height = self.anim.image.tileheight
   self.rect = shapes.Rect(self.pos.x, self.pos.y, self.width, self.height)
-  self.animPos = 1
-  self.animState = 0
-  self.animDelay = 0
-  self.anim = self.image.anims.stand
+  self.anim:changeAnim('stand', 'left')
 
   -- Key Handler
   self.keyhandle = {
@@ -31,12 +28,12 @@ function Player(startx, starty)
   }
 
   self.update = function(self, dt)
-    if self.vel.x ~= 0 then
-      if love.timer.getTime() - self.animDelay > 1 / math.abs(self.vel.x) then
-        self.animState = self.animState > 0 and 0 or self.animState + 1
-        self.animDelay = love.timer.getTime()
-      end
-      self.animPos = self.vel.x > 0 and self.anim.right.start or self.anim.left.start
+    self.anim:update(dt)
+    if self.vel.x ~= 0 then 
+      self.anim:changeAnim('walk', self.vel.x > 0 and 'right' or 'left')
+      self.anim:modifyDelay(math.abs(1 / self.vel.x))
+    else
+      self.anim:changeAnim('stand', nil)
     end
     self.pos:add(self.vel)
   end
@@ -46,7 +43,7 @@ function Player(startx, starty)
   end
 
   self.draw = function(self, x, y)
-    self.image:draw(x or self.pos.x, y or self.pos.y, self.animPos + self.animState)
+    self.anim:draw(x or self.pos.x, y or self.pos.y)
   end
 
   self.handleKeyPress = function(self, keys, key)
