@@ -63,12 +63,14 @@ function love.load()
   global.map.CollideLayer = global.map:FindLayer('Collides')
   global.map.CollectsLayer = global.map:FindLayer('Collects')
   global.map.CollectsTiles = global.map.tilesets.images[2]
+  global.map.EnemiesLayer = global.map:FindLayer('Enemies')
+  global.map.EnemiesTiles = global.map.tilesets.images[3]
   love.graphics.setLine(1, 'rough')
 
   love.graphics.setBackgroundColor(150, 150, 150, 255)
 
-  global.blue = enemy.BlueEnemy(global, 50, 40)
-  global.collider:register(global.blue, {global.blue.rect}, {player = function() print('PLAYER HIT ME!') end})
+  --global.blue = enemy.BlueEnemy(global, 50, 40)
+  --global.collider:register(global.blue, {global.blue.rect}, {player = function() print('PLAYER HIT ME!') end})
 
   --
   -- Get Items from Collects Layer
@@ -89,15 +91,29 @@ function love.load()
       end
     end
   end
-  --[[
-  for tile, x, y in loader.tileIter(global.camera, global.map.CollectsLayer, global.map.tilesets.images[2]) do
-    local usetile = global.map.tilesets.tiles[tonumber(tile)]
-    if usetile then
-      usetile.image.image:draw(x, y, tonumber(1 + tile - global.map.tilesets.images[2].firstgid))
+
+  --
+  -- Get Enemies from Enemies Layer
+  global.enemies = {}
+  local types = {[1] = 'BlueEnemy'}
+  local firstgid = global.map.EnemiesTiles.firstgid
+  local tileWidth = global.map.EnemiesTiles.tilewidth
+  local tileHeight = global.map.EnemiesTiles.tileheight
+  for y, yL in ipairs(global.map.EnemiesLayer.grid) do
+    for x, tileNum in ipairs(yL) do
+      tileNum = tonumber(tileNum)
+      local useTile = global.map.tilesets.tiles[tileNum]
+      local baseTile = tonumber(1 + tileNum - firstgid)
+      if useTile then
+        local tempItem = enemy[types[baseTile]](global, (x-1) * tileWidth, (y-1) * tileHeight)
+        table.insert(global.enemies, tempItem)
+        global.collider:register(tempItem, {tempItem.rect}, {
+          player = function(self, player) end,
+          blue = function(self, blue) print("QUIT BUMPING INTO ME PLEASE") end
+        })
+      end
     end
   end
-  --]]
-
 end
 
 function love.update(dt)
@@ -107,8 +123,10 @@ function love.update(dt)
 
   global.keyhandle:updateTimes(dt)
   
-  global.blue:update(dt)
-  global.blue:collide(global.map)
+  for _,v in ipairs(global.enemies) do
+    v:update(dt)
+    v:collide(global.map)
+  end
 
   global.collider:update(dt)
 
@@ -136,9 +154,13 @@ function love.draw()
 
   global.player:draw(global.camera:drawPlayer(global.player.pos.x, global.player.pos.y))
 
-  global.blue:draw(global.camera:drawOther(global.blue.rect.x, global.blue.rect.y))
+  --global.blue:draw(global.camera:drawOther(global.blue.rect.x, global.blue.rect.y))
 
   for _, v in ipairs(global.items) do
+    v:draw(global.camera:drawOther(v.rect.x, v.rect.y))
+  end
+
+  for _, v in ipairs(global.enemies) do
     v:draw(global.camera:drawOther(v.rect.x, v.rect.y))
   end
 
