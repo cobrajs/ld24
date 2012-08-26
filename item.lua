@@ -5,6 +5,8 @@ require 'vector'
 require 'shapes'
 require 'animated'
 
+local baseRemoveDelay = 0.5
+
 function Item(global, startx, starty)
   local self = {
     type = 'item',
@@ -12,7 +14,12 @@ function Item(global, startx, starty)
     image = nil,
     rect = nil,
     vel = vector.Vector:new(0, 0),
-    global = global
+    global = global, 
+
+    remove = false,
+    removing = false,
+    removePercent = 0,
+    removeDelay = 0
   }
 
   return self
@@ -38,11 +45,34 @@ function Food(global, startx, starty)
   self.rect = shapes.Rect(startx, starty, self.width, self.height)
 
   self.update = function(self, dt)
-    self.anim:update(dt)
+    if not self.removing then 
+      self.anim:update(dt)
+    else
+      self.removeDelay = self.removeDelay - dt
+      if self.removeDelay > 0 then
+        self.removePercent = self.removePercent + 10
+      else
+        self.removePercent = 0
+        self.removeDelay = 0
+        self.removing = false
+        self.remove = true
+      end
+    end
   end
 
   self.draw = function(self, x, y)
-    self.anim:draw(x or self.rect.x, y or self.rect.y)
+    if self.removing then
+      self.anim:drawSpecial(x or self.rect.x, y or self.rect.y, 1 + self.removePercent / 100, 1 + self.removePercent / 100, 255 * (100 - utils.clamp(0, self.removePercent, 100)) / 100)
+    else
+      self.anim:draw(x or self.rect.x, y or self.rect.y)
+    end
+  end
+
+  self.startRemoval = function(self)
+    if not self.removing then
+      self.removing = true
+      self.removeDelay = baseRemoveDelay
+    end
   end
 
   return self

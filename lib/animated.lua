@@ -59,6 +59,12 @@ function Animated(tilesetFile)
     self.image:draw(x, y, self.current.pos)
   end
 
+  self.drawSpecial = function(self, x, y, scaleX, scaleY, fade)
+    love.graphics.setColor(255,255,255,fade)
+    self.image:draw(x - math.floor((self.width * scaleX - self.width) / 2), y - math.floor((self.height * scaleY - self.height) / 2), self.current.pos, 0, scaleX, scaleY)
+    love.graphics.setColor(255,255,255,255)
+  end
+
   return self
 end
 

@@ -49,7 +49,7 @@ function love.load()
   local start = global.map:FindObject('Start', 'Player')
   global.player = player.Player(global, start.x, start.y)
 
-  global.collider = collider.Collider()
+  global.collider = collider.Collider(2)
   global.collider:register(global.player, {global.player.rect}, {
     blue = function(self, other) print('BLUE DUDE HIT ME!') end,
     cake = function(self, other) print('SWEET, CAKE!') end,
@@ -87,7 +87,7 @@ function love.load()
       if useTile then
         local tempItem = item[types[baseTile]](global, (x-1) * tileWidth, (y-1) * tileHeight)
         table.insert(global.items, tempItem)
-        global.collider:register(tempItem, {tempItem.rect}, {player = function(self, other) self.remove = true end})
+        global.collider:register(tempItem, {tempItem.rect}, {player = function(self, other) self:startRemoval() end})
       end
     end
   end
@@ -108,8 +108,13 @@ function love.load()
         local tempItem = enemy[types[baseTile]](global, (x-1) * tileWidth, (y-1) * tileHeight)
         table.insert(global.enemies, tempItem)
         global.collider:register(tempItem, {tempItem.rect}, {
-          player = function(self, player) end,
-          blue = function(self, blue) print("QUIT BUMPING INTO ME PLEASE") end
+          player = function(self, player, collideX, collideY) 
+            if collideY > 0  then print('HE HIT MY HEAD!!') end
+          end,
+          blue = function(self, blue) 
+            self.vel.x = self.vel.x * -1
+            print("QUIT BUMPING INTO ME PLEASE") 
+          end
         })
       end
     end
@@ -117,7 +122,7 @@ function love.load()
 end
 
 function love.update(dt)
-  --love.timer.sleep(0.1)
+  love.timer.sleep(0.05)
   global.player:update(dt)
   global.player:collide(global.map)
 
@@ -132,6 +137,7 @@ function love.update(dt)
 
   for i=#global.items, 1, -1 do
     local v = global.items[i]
+    v:update(dt)
     if v.remove then
       global.collider:deregister(v)
       table.remove(global.items, i)
@@ -145,16 +151,7 @@ function love.update(dt)
 end
 
 function love.draw()
-  for tile, x, y in loader.tileIter(global.camera, global.map.DisplayLayer, global.map.tilesets.images[1]) do
-    local usetile = global.map.tilesets.tiles[tonumber(tile)]
-    if usetile then
-      usetile.image.image:draw(x, y, tonumber(tile))
-    end
-  end
-
   global.player:draw(global.camera:drawPlayer(global.player.pos.x, global.player.pos.y))
-
-  --global.blue:draw(global.camera:drawOther(global.blue.rect.x, global.blue.rect.y))
 
   for _, v in ipairs(global.items) do
     v:draw(global.camera:drawOther(v.rect.x, v.rect.y))
@@ -162,6 +159,13 @@ function love.draw()
 
   for _, v in ipairs(global.enemies) do
     v:draw(global.camera:drawOther(v.rect.x, v.rect.y))
+  end
+
+  for tile, x, y in loader.tileIter(global.camera, global.map.DisplayLayer, global.map.tilesets.images[1]) do
+    local usetile = global.map.tilesets.tiles[tonumber(tile)]
+    if usetile then
+      usetile.image.image:draw(x, y, tonumber(tile))
+    end
   end
 
   --global.logger:draw()
@@ -178,3 +182,4 @@ end
 function love.keyreleased(key)
   global.keyhandle:update(key, false)
 end
+

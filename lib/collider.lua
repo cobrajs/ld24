@@ -3,25 +3,38 @@ module(..., package.seeall)
 require 'utils'
 require 'vector'
 
-function Collider()
-  local self = {}
+function Collider(offset)
+  local self = {
+    elems = {},
+    offset = offset or 0
+  }
 
   self.elems = {}
 
-  self.functions = {}
+  self.rectrect = function(self, rect1, rect2, offset) 
+    local leftA, rightA, topA, bottomA = rect1.x + offset, rect1.x + rect1.width - offset * 2, rect1.y + offset, rect1.y + rect1.height - offset * 2
+    local leftB, rightB, topB, bottomB = rect2.x + offset, rect2.x + rect2.width - offset * 2, rect2.y + offset, rect2.y + rect2.height - offset * 2
 
-  local id = 1
+    if leftA > rightB then return nil end
+    if rightA < leftB then return nil end
+    if topA > bottomB then return nil end
+    if bottomA < topB then return nil end
 
-  self.rectrect = function(self, rect1, rect2) 
-    local leftA, rightA, topA, bottomA = rect1.x, rect1.x + rect1.width, rect1.y, rect1.y + rect1.height
-    local leftB, rightB, topB, bottomB = rect2.x, rect2.x + rect2.width, rect2.y, rect2.y + rect2.height
+    local hori = nil
+    if math.abs(rightA - leftB) < math.abs(leftA - rightB) then
+      hori = rightA - leftB
+    else
+      hori = leftA - rightB
+    end
 
-    if leftA > rightB then return false end
-    if rightA < leftB then return false end
-    if topA > bottomB then return false end
-    if bottomA < topB then return false end
+    local vert = nil
+    if math.abs(topA - bottomB) < math.abs(bottomA - topB) then
+      vert = topA - bottomB
+    else
+      vert = bottomA - topB
+    end
 
-    return true
+    return hori, vert
   end
 
   self.register = function(self, object, shapes, functions)
@@ -51,11 +64,12 @@ function Collider()
         local collideElemToElemSubTypeFunc = collideElem.collidesWith[elem.subtype]
         local collideElemToElemTypeFunc = collideElem.collidesWith[elem.type]
         if elem ~= collideElem and (elemToCollideElemTypeFunc or collideElemToElemTypeFunc or elemToCollideElemSubTypeFunc or collideElemToElemSubTypeFunc) then
-          if self[elem.shapes[1].type .. collideElem.shapes[1].type](self, elem.shapes[1], collideElem.shapes[1]) then
-            if elemToCollideElemTypeFunc then elemToCollideElemTypeFunc(elem.object, collideElem.object) end
-            if elemToCollideElemSubTypeFunc then elemToCollideElemSubTypeFunc(elem.object, collideElem.object) end
-            if collideElemToElemTypeFunc then collideElemToElemTypeFunc(collideElem.object, elem.object) end
-            if collideElemToElemSubTypeFunc then collideElemToElemSubTypeFunc(collideElem.object, elem.object) end
+          local collideX, collideY = self[elem.shapes[1].type .. collideElem.shapes[1].type](self, elem.shapes[1], collideElem.shapes[1], self.offset)
+          if collideX and collideY then
+            if elemToCollideElemTypeFunc then elemToCollideElemTypeFunc(elem.object, collideElem.object, collideX, collideY) end
+            if elemToCollideElemSubTypeFunc then elemToCollideElemSubTypeFunc(elem.object, collideElem.object, collideX, collideY) end
+            if collideElemToElemTypeFunc then collideElemToElemTypeFunc(collideElem.object, elem.object, collideX, collideY) end
+            if collideElemToElemSubTypeFunc then collideElemToElemSubTypeFunc(collideElem.object, elem.object, collideX, collideY) end
           end
         end
       end

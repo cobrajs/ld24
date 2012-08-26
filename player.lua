@@ -74,12 +74,20 @@ function Player(global, startx, starty)
     end
 
     if self.global.keyhandle:check('left') then
-      self.vel:sub(self.xMove)
+      if self.vel.x > 0 then
+        self.vel.x = self.vel.x < -0.25 and self.vel.x * 0.9 or 0
+      else
+        self.vel:sub(self.xMove)
+      end
     elseif self.global.keyhandle:check('right') then
-      self.vel:add(self.xMove)
+      if self.vel.x < 0 then
+        self.vel.x = self.vel.x > 0.25 and self.vel.x * 0.9 or 0
+      else
+        self.vel:add(self.xMove)
+      end
     else
       if self.grounded then
-        self.vel.x = 0
+        self.vel.x = math.abs(self.vel.x) > 0.25 and self.vel.x * 0.9 or 0
       end
     end
 
