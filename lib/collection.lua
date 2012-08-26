@@ -27,7 +27,6 @@ function Collection(global)
 
   self.add = function(self, item)
     table.insert(self.elems, item)
-    print(item, item.type)
     return item
   end
 

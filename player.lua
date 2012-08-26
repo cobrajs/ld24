@@ -40,30 +40,9 @@ function Player(global, startx, starty)
           self.global:loadMap()
         end
       end,
-      cake = function(self, other) 
+      food = function(self, other)
         if not other.taken then
-          print('CAKE BABY!') 
-          self.attribs.weight = self.attribs.weight + other.attribs.fat
-          self.attribs.jump = self.attribs.jump + other.attribs.fiber
-          self.attribs.speed = self.attribs.speed + other.attribs.protein
-          other.taken = true
-        end
-      end,
-      carrot = function(self, other) 
-        if not other.taken then
-          print('AH, A CARROT!') 
-          self.attribs.weight = self.attribs.weight + other.attribs.fat
-          self.attribs.jump = self.attribs.jump + other.attribs.fiber
-          self.attribs.speed = self.attribs.speed + other.attribs.protein
-          other.taken = true
-        end
-      end,
-      chicken = function(self, other) 
-        if not other.taken then
-          print('YUM, CHICKEN LEG!') 
-          self.attribs.weight = self.attribs.weight + other.attribs.fat
-          self.attribs.jump = self.attribs.jump + other.attribs.fiber
-          self.attribs.speed = self.attribs.speed + other.attribs.protein
+          self:updateAttribs(other.attribs)
           other.taken = true
         end
       end
@@ -90,10 +69,22 @@ function Player(global, startx, starty)
 
   self.vel:add(self.global.gravity)
 
+  local updateMap = {
+    weight = 'fat',
+    jump = 'fiber',
+    speed = 'protein'
+  }
+  self.updateAttribs = function(self, attribs)
+    for k,v in pairs(updateMap) do
+      self.attribs[k] = self.attribs[k] + attribs[v]
+    end
+  end
+
   self.reset = function(self, newstartx, newstarty)
     self.pos.x, self.pos.y = newstartx or startx, newstarty or starty
     self.vel.x, self.vel.y = 0, 0
     self.grounded, self.jumping = false, false
+    self.attribs.weight, self.attribs.jump, self.attribs.speed = 1, 1, 1
     self:updateRect()
   end
 

@@ -15,6 +15,9 @@ require 'keyhandler'
 require 'logger'
 require 'collider'
 require 'collection'
+require 'screenhandler'
+require 'menuhandler'
+require 'hud'
 
 ------------------------------------------------------------
 -- Game objects
@@ -111,9 +114,55 @@ function love.load()
     items = nil,
     enemies = nil,
 
+    hud = hud.HUD(global, 'top', 30),
+
     loadMap = loadMap
   }
 
+  screens = screenhandler.ScreenHandler()
+  screens:addScreen({
+    name = 'game',
+    global = global,
+    enter = function(self) end,
+    update = function(self, dt)
+      if self.global.debug.slowmo then
+        love.timer.sleep(0.1)
+      end
+
+      self.global.player:update(dt)
+      self.global.player:collide(global.map)
+
+      self.global.keyhandle:updateTimes(dt)
+      
+      self.global.collider:update(dt)
+
+      self.global.items:update(dt)
+      self.global.enemies:update(dt)
+
+      self.global.camera:update(
+        math.floor(-self.global.player.pos.x + self.global.center.x),
+        math.floor(-self.global.player.pos.y + self.global.center.y)
+      )
+    end,
+    draw = function(self)
+      self.global.player:draw(self.global.camera:drawPlayer(self.global.player.pos.x, self.global.player.pos.y))
+
+      self.global.items:draw()
+      self.global.enemies:draw()
+
+      for tile, x, y in loader.tileIter(self.global.camera, self.global.map.DisplayLayer, self.global.map.tilesets.images[1]) do
+        local usetile = self.global.map.tilesets.tiles[tonumber(tile)]
+        if usetile then
+          usetile.image.image:draw(x, y, tonumber(tile))
+        end
+      end
+
+      self.global.hud:draw()
+    end
+  })
+
+  screens:switchScreen('main')
+    
   global.loadMap(global, 'level1.tmx')
 
   global.player = player.Player(global, global.map.start.x, global.map.start.y)
@@ -122,40 +171,11 @@ function love.load()
 end
 
 function love.update(dt)
-  if global.debug.slowmo then
-    love.timer.sleep(0.1)
-  end
-
-  global.player:update(dt)
-  global.player:collide(global.map)
-
-  global.keyhandle:updateTimes(dt)
-  
-  global.collider:update(dt)
-
-  global.items:update(dt)
-  global.enemies:update(dt)
-
-  global.camera:update(
-    math.floor(-global.player.pos.x + global.center.x),
-    math.floor(-global.player.pos.y + global.center.y)
-  )
+  screens:update(dt)
 end
 
 function love.draw()
-  global.player:draw(global.camera:drawPlayer(global.player.pos.x, global.player.pos.y))
-
-  global.items:draw()
-  global.enemies:draw()
-
-  for tile, x, y in loader.tileIter(global.camera, global.map.DisplayLayer, global.map.tilesets.images[1]) do
-    local usetile = global.map.tilesets.tiles[tonumber(tile)]
-    if usetile then
-      usetile.image.image:draw(x, y, tonumber(tile))
-    end
-  end
-
-  --global.logger:draw()
+  screens:draw()
 end
 
 function love.keypressed(key)

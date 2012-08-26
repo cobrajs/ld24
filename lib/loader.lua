@@ -297,6 +297,17 @@ function FindObject(map, objType, objName)
   return nil
 end
 
+function FindObjects(map, objType, objName)
+  local ret = {}
+  for i,objgroup in ipairs(map.objectgroups) do
+    for _,obj in ipairs(objgroup.objects) do
+      if ((objName and obj.name and obj.name:lower() == objName:lower()) or not objName)  and obj.type and obj.type:lower() == objType:lower() then
+        table.insert(ret, obj)
+      end
+    end
+  end
+  return #ret > 0 and ret or nil
+end
 
 --
 -- Iterates over tiles visible in the current camera view
