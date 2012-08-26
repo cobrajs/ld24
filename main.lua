@@ -14,6 +14,7 @@ require 'utils'
 require 'keyhandler'
 require 'logger'
 require 'collider'
+require 'collection'
 
 ------------------------------------------------------------
 -- Game objects
@@ -22,19 +23,10 @@ require 'player'
 require 'enemy'
 require 'item'
 
-------------------------------------------------------------
--- Load function
-function love.load()
-  global = {
-    center = {x = love.graphics.getWidth() / 2, y = love.graphics.getHeight() / 2},
-    map = loader.LoadMapLove('maps/level1.tmx'),
-    keyhandle = keyhandler.KeyHandler('keys.lua'),
-    logger = logger.Logger(),
-    gravity = vector.Vector:new(0, 0.2),
 
-    camera = nil,
-    player = nil
-  }
+function loadMap(global, level)
+  global.currentLevel = level or global.currentLevel
+  global.map = loader.LoadMapLove(global.currentLevel)
 
   for i,v in ipairs(global.map.tilesets.images) do
     local tempSource = v.source
@@ -46,103 +38,103 @@ function love.load()
     v.image = tileset.Tileset(tempSource, v.tileX, v.tileY)
   end  
 
-  local start = global.map:FindObject('Start', 'Player')
-  global.player = player.Player(global, start.x, start.y)
+  global.map.start = global.map:FindObject('Start', 'Player')
 
-  global.collider = collider.Collider(2)
-  global.collider:register(global.player, {global.player.rect}, {
-    blue = function(self, other) print('BLUE DUDE HIT ME!') end,
-    cake = function(self, other) print('SWEET, CAKE!') end,
-    carrot = function(self, other) print('AH, A CARROT!') end,
-    chicken = function(self, other) print('YUM, CHICKEN LEG!') end
-  })
+  if global.player then
+    global.player:reset(global.map.start.x, global.map.start.y)
+  end
 
-  global.camera = camera.Camera(love.graphics.getWidth() - global.map.width, love.graphics.getHeight() - global.map.height)
-
+  --
+  -- Preload some map stuff
   global.map.DisplayLayer = global.map:FindLayer('Display')
   global.map.CollideLayer = global.map:FindLayer('Collides')
   global.map.CollectsLayer = global.map:FindLayer('Collects')
   global.map.CollectsTiles = global.map.tilesets.images[2]
   global.map.EnemiesLayer = global.map:FindLayer('Enemies')
   global.map.EnemiesTiles = global.map.tilesets.images[3]
-  love.graphics.setLine(1, 'rough')
 
-  love.graphics.setBackgroundColor(150, 150, 150, 255)
+  --
+  -- Set background for map
+  love.graphics.setBackgroundColor(unpack(global.map.background:split(',')))
 
-  --global.blue = enemy.BlueEnemy(global, 50, 40)
-  --global.collider:register(global.blue, {global.blue.rect}, {player = function() print('PLAYER HIT ME!') end})
+  if global.items then
+    global.items:empty()
+  else
+    global.items = collection.Collection(global)
+  end
 
   --
   -- Get Items from Collects Layer
-  global.items = {}
-  local types = {'Cake', 'Carrot', 'Chicken'}
-  local firstgid = global.map.CollectsTiles.firstgid
-  local tileWidth = global.map.CollectsTiles.tilewidth
-  local tileHeight = global.map.CollectsTiles.tileheight
-  for y, yL in ipairs(global.map.CollectsLayer.grid) do
-    for x, tileNum in ipairs(yL) do
-      tileNum = tonumber(tileNum)
-      local useTile = global.map.tilesets.tiles[tileNum]
-      local baseTile = tonumber(1 + tileNum - firstgid)
-      if useTile then
-        local tempItem = item[types[baseTile]](global, (x-1) * tileWidth, (y-1) * tileHeight)
-        table.insert(global.items, tempItem)
-        global.collider:register(tempItem, {tempItem.rect}, {player = function(self, other) self:startRemoval() end})
-      end
-    end
+  global.items:addFromLayer(global.map.CollectsTiles, global.map.CollectsLayer, function(baseTile, x, y)
+    local tempItem = item[item.types[baseTile]](global, x, y)
+    global.collider:register(tempItem, {tempItem.rect}, {
+      player = function(self, other) self:startRemoval() end
+    })
+    return tempItem
+  end)
+
+
+  if global.enemies then
+    global.enemies:empty()
+  else
+    global.enemies = collection.Collection(global)
   end
 
   --
   -- Get Enemies from Enemies Layer
-  global.enemies = {}
-  local types = {[1] = 'BlueEnemy'}
-  local firstgid = global.map.EnemiesTiles.firstgid
-  local tileWidth = global.map.EnemiesTiles.tilewidth
-  local tileHeight = global.map.EnemiesTiles.tileheight
-  for y, yL in ipairs(global.map.EnemiesLayer.grid) do
-    for x, tileNum in ipairs(yL) do
-      tileNum = tonumber(tileNum)
-      local useTile = global.map.tilesets.tiles[tileNum]
-      local baseTile = tonumber(1 + tileNum - firstgid)
-      if useTile then
-        local tempItem = enemy[types[baseTile]](global, (x-1) * tileWidth, (y-1) * tileHeight)
-        table.insert(global.enemies, tempItem)
-        global.collider:register(tempItem, {tempItem.rect}, {
-          player = function(self, player, collideX, collideY) 
-            if collideY > 0  then print('HE HIT MY HEAD!!') end
-          end,
-          blue = function(self, blue) 
-            self.vel.x = self.vel.x * -1
-            print("QUIT BUMPING INTO ME PLEASE") 
-          end
-        })
-      end
-    end
-  end
+  global.enemies:addFromLayer(global.map.EnemiesTiles, global.map.EnemiesLayer, function(baseTile, x, y)
+    local tempItem = enemy[enemy.types[baseTile]](global, x, y)
+    global.collider:register(tempItem, {tempItem.rect}, tempItem.collisionFuncs)
+    return tempItem
+  end)
+  
+  global.camera.maxx, global.camera.maxy = love.graphics.getWidth() - global.map.width, love.graphics.getHeight() - global.map.height
+end
+
+------------------------------------------------------------
+-- Load function
+function love.load()
+  global = {
+    center = {x = love.graphics.getWidth() / 2, y = love.graphics.getHeight() / 2},
+    map = nil,
+    keyhandle = keyhandler.KeyHandler('keys.lua'),
+    logger = logger.Logger(),
+    gravity = vector.Vector:new(0, 0.2),
+
+    debug = {
+      slowmo = false
+    },
+
+    camera = camera.Camera(0, 0),
+    player = nil,
+    collider = collider.Collider(1),
+    items = nil,
+    enemies = nil,
+
+    loadMap = loadMap
+  }
+
+  global.loadMap(global, 'level1.tmx')
+
+  global.player = player.Player(global, global.map.start.x, global.map.start.y)
+
+  global.collider:register(global.player, {global.player.rect}, global.player.collisionFuncs)
 end
 
 function love.update(dt)
-  love.timer.sleep(0.05)
+  if global.debug.slowmo then
+    love.timer.sleep(0.1)
+  end
+
   global.player:update(dt)
   global.player:collide(global.map)
 
   global.keyhandle:updateTimes(dt)
   
-  for _,v in ipairs(global.enemies) do
-    v:update(dt)
-    v:collide(global.map)
-  end
-
   global.collider:update(dt)
 
-  for i=#global.items, 1, -1 do
-    local v = global.items[i]
-    v:update(dt)
-    if v.remove then
-      global.collider:deregister(v)
-      table.remove(global.items, i)
-    end
-  end
+  global.items:update(dt)
+  global.enemies:update(dt)
 
   global.camera:update(
     math.floor(-global.player.pos.x + global.center.x),
@@ -153,13 +145,8 @@ end
 function love.draw()
   global.player:draw(global.camera:drawPlayer(global.player.pos.x, global.player.pos.y))
 
-  for _, v in ipairs(global.items) do
-    v:draw(global.camera:drawOther(v.rect.x, v.rect.y))
-  end
-
-  for _, v in ipairs(global.enemies) do
-    v:draw(global.camera:drawOther(v.rect.x, v.rect.y))
-  end
+  global.items:draw()
+  global.enemies:draw()
 
   for tile, x, y in loader.tileIter(global.camera, global.map.DisplayLayer, global.map.tilesets.images[1]) do
     local usetile = global.map.tilesets.tiles[tonumber(tile)]
@@ -174,6 +161,10 @@ end
 function love.keypressed(key)
   if key == 'escape' or key == 'q' then
     love.event.push('quit')
+  elseif key == 's' then
+    if type(global.debug.slowmo) == 'boolean' then
+      global.debug.slowmo = true
+    end
   end
   global.player:handleKeyPress(global.keyhandle.keys, key)
   global.keyhandle:update(key, true)
@@ -181,5 +172,10 @@ end
 
 function love.keyreleased(key)
   global.keyhandle:update(key, false)
+  if key == 's' then
+    if type(global.debug.slowmo) == 'boolean' then
+      global.debug.slowmo = false
+    end
+  end
 end
 

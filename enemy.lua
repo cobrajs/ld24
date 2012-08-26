@@ -19,6 +19,8 @@ function Enemy(global, startx, starty)
   return self
 end
 
+types = {[1]='BlueEnemy'}
+
 function BlueEnemy(global, startx, starty)
   local self = Enemy(global, startx, starty)
 
@@ -35,6 +37,20 @@ function BlueEnemy(global, startx, starty)
   self.xMove = vector.Vector:new(1, 0)
   self.vel:add(self.xMove)
   self.vel:add(self.global.gravity)
+  
+  self.collisionFuncs = {
+    player = function(self, player, collideDepth, collideSide) 
+      if collideSide == 'top' then 
+        print('GIT OFF MY HEAD!!') 
+        player.jumping = true
+        player.vel.y = -4
+      end
+    end,
+    blue = function(self, blue) 
+      self.vel.x = self.vel.x * -1
+      print("QUIT BUMPING INTO ME PLEASE") 
+    end
+  }
 
   self.update = function(self, dt)
     self.anim:update(dt)

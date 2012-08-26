@@ -3,24 +3,24 @@ local function addState(start, fin, len, delayLen)
 end
 
 return {
-  tilesx = 4, tilesy = 4,
-  image = {source = "gfx/man.png", width = 128, height = 128},
+  tilesx = 8, tilesy = 8,
+  image = {source = "gfx/man.png", width = 256, height = 256},
   anims = {
     stand = {
-      right = addState(1, 1, 0, 0.01),
-      left = addState(5, 5, 0, 0.01)
+      right = addState(1, 1, 0, 5),
+      left = addState(9, 9, 0, 5)
     },
     walk = {
       right = addState(2, 4, 1, 0.1),
-      left = addState(6, 8, 1, 0.1)
+      left = addState(10, 12, 1, 0.1)
     },
     fall = {
-      right = addState(9, 9, 0, 5),
-      left = addState(13, 13, 0, 5)
+      right = addState(17, 17, 0, 5),
+      left = addState(25, 25, 0, 5)
     },
     jump = {
-      right = addState(9, 9, 0, 5),
-      left = addState(13, 13, 0, 5)
+      right = addState(17, 17, 0, 5),
+      left = addState(25, 25, 0, 5)
     }
   }
 }

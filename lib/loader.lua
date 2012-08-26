@@ -7,6 +7,7 @@ require 'utils' require 'xml'
 
 function LoadMapLove(mapname)
   assert(type(love) ~= nil, 'Love2D is required for this function')
+  if not love.filesystem.exists(mapname) then mapname = 'maps/'..mapname end
   local parsedXML = xml.LoadXML(love.filesystem.read(mapname))
   return ParseMap(parsedXML)
 end
@@ -32,6 +33,13 @@ function ParseMap(parsedXML)
   for i, v in pairs(objectgroups) do
     table.insert(map.objectgroups, ParseObjectGroup(v))
   end
+  local properties = xml.FindInXML(parsedXML, 'properties')
+  if properties then
+    properties = xml.FindAllInXML(properties, 'property')
+    for i, v in ipairs(properties) do
+      map[v.xarg.name] = v.xarg.value
+    end
+  end
   map.tileWidth = map.tilesets.images[1].tilewidth
   map.tileHeight = map.tilesets.images[1].tileheight
   map.width = map.layers[1].width * map.tilesets.images[1].tilewidth
@@ -55,10 +63,10 @@ function ParseMap(parsedXML)
     local blank = '1'
     local collideLayer = self.CollideLayer
     local ignoreCorners = rect.width >= self.tileWidth * 2
-    local minx = math.floor((rect.x) / self.tileWidth)
-    local miny = math.floor((rect.y) / self.tileHeight)
-    local maxx = math.floor((rect.x + rect.width) / self.tileWidth)
-    local maxy = math.floor((rect.y + rect.height) / self.tileHeight)
+    local minx = math.max(math.floor((rect.x) / self.tileWidth), 0)
+    local miny = math.max(math.floor((rect.y) / self.tileHeight), 0)
+    local maxx = math.min(math.floor((rect.x + rect.width) / self.tileWidth), #collideLayer.grid[1] - 1)
+    local maxy = math.min(math.floor((rect.y + rect.height) / self.tileHeight), #collideLayer.grid - 1)
     local ret = {up = 0, down = 0, left = 0, right = 0}
     local count = {up = 0, down = 0, left = 0, right = 0}
     for y = miny, maxy do

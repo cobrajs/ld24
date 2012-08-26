@@ -7,6 +7,8 @@ require 'animated'
 
 local baseRemoveDelay = 0.5
 
+types = {'Cake', 'Carrot', 'Chicken'}
+
 function Item(global, startx, starty)
   local self = {
     type = 'item',
@@ -31,10 +33,10 @@ function Food(global, startx, starty)
   self.type = 'food'
 
   self.attribs = {
-    fat = 5,
-    protein = 5,
-    fiber = 5,
-    spicy = 5
+    fat = 0,
+    protein = 0,
+    fiber = 0,
+    spicy = 0
   }
 
 
@@ -82,12 +84,12 @@ function Cake(global, startx, starty)
   local self = Food(global, startx, starty)
 
   self.subtype = 'cake'
-  self.attribs.fat = 10
-  self.attribs.protien = 0
-  self.attribs.fiber = 0
+  self.attribs.fat = 0.4
+  self.attribs.protein = -0.2
+  self.attribs.fiber = -0.2
   self.attribs.spicy = 0
 
-  self.anim:changeAnim('cake', 'normal')
+  self.anim:changeAnim(self.subtype, 'normal')
 
   return self
 end
@@ -96,12 +98,12 @@ function Carrot(global, startx, starty)
   local self = Food(global, startx, starty)
 
   self.subtype = 'carrot'
-  self.attribs.fat = 0
-  self.attribs.protien = 0
-  self.attribs.fiber = 10
+  self.attribs.fat = -0.2
+  self.attribs.protein = -0.1
+  self.attribs.fiber = 0.2
   self.attribs.spicy = 0
 
-  self.anim:changeAnim('carrot', 'normal')
+  self.anim:changeAnim(self.subtype, 'normal')
 
   return self
 end
@@ -110,12 +112,26 @@ function Chicken(global, startx, starty)
   local self = Food(global, startx, starty)
 
   self.subtype = 'chicken'
-  self.attribs.fat = 0
-  self.attribs.protien = 10
-  self.attribs.fiber = 0
+  self.attribs.fat = -0.2
+  self.attribs.protein = 0.2
+  self.attribs.fiber = -0.1
   self.attribs.spicy = 0
 
-  self.anim:changeAnim('chicken', 'normal')
+  self.anim:changeAnim(self.subtype, 'normal')
+
+  return self
+end
+
+function Chile(global, startx, starty)
+  local self = Food(global, startx, starty)
+
+  self.subtype = 'chile'
+  self.attribs.fat = -0.2
+  self.attribs.protein = 0.2
+  self.attribs.fiber = -0.1
+  self.attribs.spicy = 0
+
+  self.anim:changeAnim(self.subtype, 'normal')
 
   return self
 end

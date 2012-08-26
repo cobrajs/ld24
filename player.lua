@@ -29,14 +29,51 @@ function Player(global, startx, starty)
 
     xMove = vector.Vector:new(0.1, 0),
     keyhandle = {
-      --left = vector.Vector:new(-0.5,0),
-      --right = vector.Vector:new(0.5,0),
-      --up = vector.Vector:new(0,-0.5),
-      --down = vector.Vector:new(0,0.5),
       jump = vector.Vector:new(0,-4)
     },
 
-    maxVel = vector.Vector:new(2, 8)
+    maxVel = vector.Vector:new(2, 8),
+
+    collisionFuncs = {
+      blue = function(self, other, collideDepth, collideSide) 
+        if collideSide ~= 'top' then 
+          self.global:loadMap()
+        end
+      end,
+      cake = function(self, other) 
+        if not other.taken then
+          print('CAKE BABY!') 
+          self.attribs.weight = self.attribs.weight + other.attribs.fat
+          self.attribs.jump = self.attribs.jump + other.attribs.fiber
+          self.attribs.speed = self.attribs.speed + other.attribs.protein
+          other.taken = true
+        end
+      end,
+      carrot = function(self, other) 
+        if not other.taken then
+          print('AH, A CARROT!') 
+          self.attribs.weight = self.attribs.weight + other.attribs.fat
+          self.attribs.jump = self.attribs.jump + other.attribs.fiber
+          self.attribs.speed = self.attribs.speed + other.attribs.protein
+          other.taken = true
+        end
+      end,
+      chicken = function(self, other) 
+        if not other.taken then
+          print('YUM, CHICKEN LEG!') 
+          self.attribs.weight = self.attribs.weight + other.attribs.fat
+          self.attribs.jump = self.attribs.jump + other.attribs.fiber
+          self.attribs.speed = self.attribs.speed + other.attribs.protein
+          other.taken = true
+        end
+      end
+    },
+
+    attribs = {
+      weight = 1,
+      jump = 1,
+      speed = 1
+    }
   }
 
   self.width = self.anim.image.tilewidth
@@ -52,6 +89,13 @@ function Player(global, startx, starty)
   self.anim:changeAnim('stand', 'left')
 
   self.vel:add(self.global.gravity)
+
+  self.reset = function(self, newstartx, newstarty)
+    self.pos.x, self.pos.y = newstartx or startx, newstarty or starty
+    self.vel.x, self.vel.y = 0, 0
+    self.grounded, self.jumping = false, false
+    self:updateRect()
+  end
 
   self.update = function(self, dt)
     self.anim:update(dt)
@@ -91,7 +135,7 @@ function Player(global, startx, starty)
       end
     end
 
-    self.vel.x = utils.clamp(-self.maxVel.x, self.vel.x, self.maxVel.x)
+    self.vel.x = utils.clamp(-self.maxVel.x * self.attribs.speed, self.vel.x, self.maxVel.x * self.attribs.speed)
     self.vel.y = utils.clamp(-self.maxVel.y, self.vel.y, self.maxVel.y)
 
     self.pos:add(self.vel)
@@ -135,7 +179,7 @@ function Player(global, startx, starty)
       if key == k then action = v end
     end
     if action == 'jump' and self.grounded then
-      self.vel:add(self.keyhandle[action])
+      self.vel.y = self.vel.y + self.keyhandle[action].y * self.attribs.jump
       self.jumping = true
     end
   end
