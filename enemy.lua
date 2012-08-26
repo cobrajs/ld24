@@ -34,20 +34,32 @@ function BlueEnemy(global, startx, starty)
 
   self.xMove = vector.Vector:new(1, 0)
   self.vel:add(self.xMove)
+  self.vel:add(self.global.gravity)
 
   self.update = function(self, dt)
     self.anim:update(dt)
+
+    self.anim:changeAnim(nil, self.vel.x > 0 and 'right' or 'left')
 
     self.rect:add(self.vel)
   end
 
   self.collide = function(self, map)
-    local collideMap = map:collides(self.rect, self.vel, true)
+    local collideMap, countMap = map:collides(self.rect, self.vel)
+
+    if collideMap.down > 0 then
+      collideMap.left = 0
+      collideMap.right = 0
+      self.rect.y = self.rect.y - collideMap.down
+      self.vel.y = 0
+    else
+      self.vel:add(self.global.gravity)
+    end
     if collideMap.left > 0 then 
-      self.pos.x = self.pos.x - collideMap.left
+      self.rect.x = self.rect.x - collideMap.left
       self.vel.x = self.vel.x * -1
     elseif collideMap.right > 0 then
-      self.pos.x = self.pos.x - collideMap.right
+      self.rect.x = self.rect.x - collideMap.right
       self.vel.x = self.vel.x * -1
     end
   end

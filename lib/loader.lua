@@ -51,7 +51,7 @@ function ParseMap(parsedXML)
     end
   end
 
-  map.collides = function(self, rect, dir, debug)
+  map.collides = function(self, rect, dir)
     local blank = '1'
     local collideLayer = self.CollideLayer
     local ignoreCorners = rect.width >= self.tileWidth * 2
@@ -66,6 +66,29 @@ function ParseMap(parsedXML)
         if collideLayer.grid[y + 1][x + 1] ~= blank and (not ignoreCorners or not ((x == minx and y == miny) or (x == minx and y == maxy) or (x == maxx and y == miny) or (x == maxx and y == maxy))) then 
           --local isCorner = (x == minx and y == miny) or (x == minx and y == maxy) or (x == maxx and y == miny) or (x == maxx and y == maxy)
           --if ignoreCorners or not isCorner then
+          if maxx - minx <= 1 and maxy - miny <= 1 then
+            if x == minx and y == miny then
+              ret.up = getFrom('up', rect, x, y, self.tileWidth, self.tileHeight)
+              count.up = count.up + 1
+              ret.left = getFrom('left', rect, x, y, self.tileWidth, self.tileHeight)
+              count.left = count.left + 1
+            elseif x == minx and y == maxy then
+              ret.down = getFrom('down', rect, x, y, self.tileWidth, self.tileHeight)
+              count.down = count.down + 1
+              ret.left = getFrom('left', rect, x, y, self.tileWidth, self.tileHeight)
+              count.left = count.left + 1
+            elseif x == maxx and y == miny then
+              ret.up = getFrom('up', rect, x, y, self.tileWidth, self.tileHeight)
+              count.up = count.up + 1
+              ret.right = getFrom('right', rect, x, y, self.tileWidth, self.tileHeight)
+              count.right = count.right + 1
+            elseif x == maxx and y == maxy then
+              ret.down = getFrom('down', rect, x, y, self.tileWidth, self.tileHeight)
+              count.down = count.down + 1
+              ret.right = getFrom('right', rect, x, y, self.tileWidth, self.tileHeight)
+              count.right = count.right + 1
+            end
+          else
             local side = 
               y == miny and 'up' or
               y == maxy and 'down' or
@@ -77,6 +100,7 @@ function ParseMap(parsedXML)
               count[side] = count[side] + 1
               --print(side, x, y)
             end
+          end
             --[[
           else
             if x == minx and y == miny then
@@ -158,11 +182,12 @@ function ParseMap(parsedXML)
     else
       local hori = count.left + count.right
       local vert = count.up + count.down
-      --print(hori, vert)
       if hori == 1 and count.up == 1 and count.down == 1 then ret.up, ret.down = 0, 0 end
-      --if math.max(count.left, count.right) > 1 and math.max(count.up, count.down) <= 1 then
-        --ret.up, ret.down = 0
-      --end
+      if count.down == 2 and count.left == 1 and count.right == 1 then ret.left, ret.right = 0, 0 end
+      if count.down > count.up then ret.up = 0 end
+      if count.up > count.down then ret.down = 0 end
+      if count.left > count.right then ret.right = 0 end
+      if count.right > count.left then ret.left = 0 end
     end
 
     if ret.left > 0 and dir.x >= 0 then ret.left = 0 end
@@ -256,7 +281,6 @@ end
 function FindObject(map, objType, objName)
   for i,objgroup in ipairs(map.objectgroups) do
     for _,obj in ipairs(objgroup.objects) do
-      print(obj.name, obj.type)
       if obj.name and obj.type and obj.name:lower() == objName:lower() and obj.type:lower() == objType:lower() then
         return obj
       end

@@ -13,6 +13,7 @@ require 'camera'
 require 'utils'
 require 'keyhandler'
 require 'logger'
+require 'collider'
 
 ------------------------------------------------------------
 -- Game objects
@@ -29,29 +30,65 @@ function love.load()
     map = loader.LoadMapLove('maps/level1.tmx'),
     keyhandle = keyhandler.KeyHandler('keys.lua'),
     logger = logger.Logger(),
+    gravity = vector.Vector:new(0, 0.2),
 
     camera = nil,
     player = nil
   }
 
   for i,v in ipairs(global.map.tilesets.images) do
-    v.image = tileset.Tileset(v.source, v.tileX, v.tileY)
+    local tempSource = v.source
+    if v.source:sub(1,2) == '..' then
+      tempSource = v.source:split('/')
+      table.remove(tempSource, 1)
+      tempSource = table.concat(tempSource, '/')
+    end
+    v.image = tileset.Tileset(tempSource, v.tileX, v.tileY)
   end  
 
   local start = global.map:FindObject('Start', 'Player')
   global.player = player.Player(global, start.x, start.y)
+
+  global.collider = collider.Collider()
+  global.collider:register(global.player, {global.player.rect}, {
+    blue = function(self, other) print('BLUE DUDE HIT ME!') end,
+    cake = function(self, other) print('SWEET, CAKE!') end,
+    carrot = function(self, other) print('AH, A CARROT!') end,
+    chicken = function(self, other) print('YUM, CHICKEN LEG!') end
+  })
 
   global.camera = camera.Camera(love.graphics.getWidth() - global.map.width, love.graphics.getHeight() - global.map.height)
 
   global.map.DisplayLayer = global.map:FindLayer('Display')
   global.map.CollideLayer = global.map:FindLayer('Collides')
   global.map.CollectsLayer = global.map:FindLayer('Collects')
+  global.map.CollectsTiles = global.map.tilesets.images[2]
   love.graphics.setLine(1, 'rough')
 
-  global.blue = enemy.BlueEnemy(global, 20, 20)
+  love.graphics.setBackgroundColor(150, 150, 150, 255)
 
+  global.blue = enemy.BlueEnemy(global, 50, 40)
+  global.collider:register(global.blue, {global.blue.rect}, {player = function() print('PLAYER HIT ME!') end})
 
-  global.items = 0
+  --
+  -- Get Items from Collects Layer
+  global.items = {}
+  local types = {'Cake', 'Carrot', 'Chicken'}
+  local firstgid = global.map.CollectsTiles.firstgid
+  local tileWidth = global.map.CollectsTiles.tilewidth
+  local tileHeight = global.map.CollectsTiles.tileheight
+  for y, yL in ipairs(global.map.CollectsLayer.grid) do
+    for x, tileNum in ipairs(yL) do
+      tileNum = tonumber(tileNum)
+      local useTile = global.map.tilesets.tiles[tileNum]
+      local baseTile = tonumber(1 + tileNum - firstgid)
+      if useTile then
+        local tempItem = item[types[baseTile]](global, (x-1) * tileWidth, (y-1) * tileHeight)
+        table.insert(global.items, tempItem)
+        global.collider:register(tempItem, {tempItem.rect}, {player = function(self, other) self.remove = true end})
+      end
+    end
+  end
   --[[
   for tile, x, y in loader.tileIter(global.camera, global.map.CollectsLayer, global.map.tilesets.images[2]) do
     local usetile = global.map.tilesets.tiles[tonumber(tile)]
@@ -64,6 +101,7 @@ function love.load()
 end
 
 function love.update(dt)
+  --love.timer.sleep(0.1)
   global.player:update(dt)
   global.player:collide(global.map)
 
@@ -71,6 +109,16 @@ function love.update(dt)
   
   global.blue:update(dt)
   global.blue:collide(global.map)
+
+  global.collider:update(dt)
+
+  for i=#global.items, 1, -1 do
+    local v = global.items[i]
+    if v.remove then
+      global.collider:deregister(v)
+      table.remove(global.items, i)
+    end
+  end
 
   global.camera:update(
     math.floor(-global.player.pos.x + global.center.x),
@@ -89,6 +137,10 @@ function love.draw()
   global.player:draw(global.camera:drawPlayer(global.player.pos.x, global.player.pos.y))
 
   global.blue:draw(global.camera:drawOther(global.blue.rect.x, global.blue.rect.y))
+
+  for _, v in ipairs(global.items) do
+    v:draw(global.camera:drawOther(v.rect.x, v.rect.y))
+  end
 
   --global.logger:draw()
 end

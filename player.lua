@@ -7,13 +7,38 @@ require 'shapes'
 require 'animated'
 
 function Player(global, startx, starty)
-  local self = {global = global}
-  -- Position vars
-  self.pos = vector.Vector:new(startx, starty)
-  self.vel = vector.Vector:new(0, 0)
+  local self = {
+    global = global,
+    type = 'player',
 
-  -- Animation vars
-  self.anim = animated.Animated('gfx/player_tiles.lua')
+    -- Position vars
+    pos = vector.Vector:new(startx, starty),
+    vel = vector.Vector:new(0, 0),
+
+    -- Animation vars
+    anim = animated.Animated('gfx/player_tiles.lua'),
+    width = nil,
+    height = nil,
+
+    rect = nil,
+
+    grounded = false,
+    jumping = false,
+
+    -- Key Handler
+
+    xMove = vector.Vector:new(0.1, 0),
+    keyhandle = {
+      --left = vector.Vector:new(-0.5,0),
+      --right = vector.Vector:new(0.5,0),
+      --up = vector.Vector:new(0,-0.5),
+      --down = vector.Vector:new(0,0.5),
+      jump = vector.Vector:new(0,-4)
+    },
+
+    maxVel = vector.Vector:new(2, 8)
+  }
+
   self.width = self.anim.image.tilewidth
   self.height = self.anim.image.tileheight
 
@@ -26,29 +51,12 @@ function Player(global, startx, starty)
 
   self.anim:changeAnim('stand', 'left')
 
-  self.grounded = false
-  self.jumping = false
-
-  -- Key Handler
-  self.xMove = vector.Vector:new(0.1, 0)
-  self.keyhandle = {
-    --left = vector.Vector:new(-0.5,0),
-    --right = vector.Vector:new(0.5,0),
-    --up = vector.Vector:new(0,-0.5),
-    --down = vector.Vector:new(0,0.5),
-    jump = vector.Vector:new(0,-4)
-  }
-
-  self.gravity = vector.Vector:new(0, 0.2)
-
-  self.maxVel = vector.Vector:new(2, 8)
-
-  self.vel:add(self.gravity)
+  self.vel:add(self.global.gravity)
 
   self.update = function(self, dt)
     self.anim:update(dt)
 
-    self.grounded = not (math.abs(self.vel.y) > self.gravity.y) and not self.jumping
+    self.grounded = not (math.abs(self.vel.y) > self.global.gravity.y) and not self.jumping
 
     if self.grounded then
       if self.vel.x ~= 0 then 
@@ -90,7 +98,7 @@ function Player(global, startx, starty)
       self.vel.y = 0
       self.jumping = false
     else
-      self.vel:add(self.gravity)
+      self.vel:add(self.global.gravity)
     end
 
     if collideMap.up > 0 then

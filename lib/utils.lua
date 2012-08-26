@@ -26,6 +26,10 @@ function math.sign(number)
   return number > 0 and 1 or number < 0 and -1 or 0
 end
 
+function math.round(number)
+  return number - math.floor(number) > 0.5 and math.ceil(number) or math.floor(number)
+end
+
 --
 --
 --
