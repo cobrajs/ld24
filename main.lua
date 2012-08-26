@@ -43,18 +43,58 @@ function loadMap(global, level)
 
   global.map.start = global.map:FindObject('Start', 'Player')
 
+  if global.finishes then
+    global.finishes:empty()
+  else
+    global.finishes = collection.Collection(global)
+  end
+
+  local finishes = global.map:FindObjects('Finish')
+  if finishes then
+    for i,v in ipairs(finishes) do
+      v.rect = {type = 'rect', x = tonumber(v.x), y = tonumber(v.y), width = tonumber(v.width), height = tonumber(v.height)}
+      v.type = 'finish'
+      global.collider:register(v, {v.rect}, {player = function(self, other)
+        global:loadMap()
+      end})
+    end
+  end
+
   if global.player then
     global.player:reset(global.map.start.x, global.map.start.y)
   end
 
   --
   -- Preload some map stuff
-  global.map.DisplayLayer = global.map:FindLayer('Display')
+  global.map.DisplayFrontLayer = global.map:FindLayer('DisplayFront')
+  global.map.DisplayBackLayer = global.map:FindLayer('DisplayBack')
   global.map.CollideLayer = global.map:FindLayer('Collides')
   global.map.CollectsLayer = global.map:FindLayer('Collects')
   global.map.CollectsTiles = global.map.tilesets.images[2]
   global.map.EnemiesLayer = global.map:FindLayer('Enemies')
   global.map.EnemiesTiles = global.map.tilesets.images[3]
+
+  if global.helpBoxes then
+    global.helpBoxes:empty()
+  else
+    global.helpBoxes = collection.Collection(global)
+  end
+
+  local helpBoxes = global.map:FindObjects('help')
+  if helpBoxes then
+    for i,v in ipairs(helpBoxes) do
+      v.rect = {type = 'rect', x = tonumber(v.x), y = tonumber(v.y), width = tonumber(v.width), height = tonumber(v.height)}
+      v.type = 'help'
+      global.collider:register(v, {v.rect}, {player = function(self, other)
+        if self.text == 'clear' then
+          global.hud:clear()
+        else
+          global.hud:clear()
+          global.hud:setText(self.text)
+        end
+      end})
+    end
+  end
 
   --
   -- Set background for map
@@ -121,9 +161,34 @@ function love.load()
 
   screens = screenhandler.ScreenHandler()
   screens:addScreen({
+    name = 'title',
+    global = global,
+    timeout = 2,
+    titleImage = utils.loadImage('title.png'),
+    enter = function(self) 
+      love.graphics.setBackgroundColor(0, 0, 0, 255)
+    end,
+    update = function(self, dt)
+      if self.timeout > 0 then
+        self.timeout = self.timeout - dt
+      else
+        screens:switchScreen('game')
+      end
+    end,
+    draw = function(self)
+      love.graphics.draw(self.titleImage, 0, 0)
+      love.graphics.setColor(150, 150, 150, 255)
+      love.graphics.print('Press any key', 230, 220)
+      love.graphics.setColor(255, 255, 255, 255)
+    end
+  })
+
+  screens:addScreen({
     name = 'game',
     global = global,
-    enter = function(self) end,
+    enter = function(self) 
+      self.global.loadMap(self.global, self.global.currentLevel)
+    end,
     update = function(self, dt)
       if self.global.debug.slowmo then
         love.timer.sleep(0.1)
@@ -145,14 +210,23 @@ function love.load()
       )
     end,
     draw = function(self)
+      for tile, x, y in loader.tileIter(self.global.camera, self.global.map.DisplayBackLayer, self.global.map.tilesets.images[1]) do
+        tile = tonumber(tile)
+        local usetile = self.global.map.tilesets.tiles[tonumber(tile)]
+        if usetile and tile > 1 then
+          usetile.image.image:draw(x, y, tonumber(tile))
+        end
+      end
+
       self.global.player:draw(self.global.camera:drawPlayer(self.global.player.pos.x, self.global.player.pos.y))
 
       self.global.items:draw()
       self.global.enemies:draw()
 
-      for tile, x, y in loader.tileIter(self.global.camera, self.global.map.DisplayLayer, self.global.map.tilesets.images[1]) do
+      for tile, x, y in loader.tileIter(self.global.camera, self.global.map.DisplayFrontLayer, self.global.map.tilesets.images[1]) do
+        tile = tonumber(tile)
         local usetile = self.global.map.tilesets.tiles[tonumber(tile)]
-        if usetile then
+        if usetile and tile > 1 then
           usetile.image.image:draw(x, y, tonumber(tile))
         end
       end
@@ -161,11 +235,12 @@ function love.load()
     end
   })
 
-  screens:switchScreen('main')
+  screens:switchScreen('title')
     
-  global.loadMap(global, 'level1.tmx')
+  global.currentLevel = 'tutorial.tmx'
+  --global.loadMap(global, 'tutorial.tmx')
 
-  global.player = player.Player(global, global.map.start.x, global.map.start.y)
+  global.player = player.Player(global, 0, 0)
 
   global.collider:register(global.player, {global.player.rect}, global.player.collisionFuncs)
 end
@@ -185,6 +260,9 @@ function love.keypressed(key)
     if type(global.debug.slowmo) == 'boolean' then
       global.debug.slowmo = true
     end
+  end
+  if screens:onScreen('title') then
+    screens:switchScreen('game')
   end
   global.player:handleKeyPress(global.keyhandle.keys, key)
   global.keyhandle:update(key, true)

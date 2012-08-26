@@ -52,6 +52,16 @@ function Player(global, startx, starty)
       weight = 1,
       jump = 1,
       speed = 1
+    },
+    minAttribs = {
+      weight = 0.5, 
+      jump = 0,
+      speed = 0.2
+    },
+    maxAttribs = {
+      weight = 2,
+      jump = 2,
+      speed = 2
     }
   }
 
@@ -65,7 +75,7 @@ function Player(global, startx, starty)
     self.rect.x, self.rect.y = self.pos.x + offset, self.pos.y
   end
 
-  self.anim:changeAnim('stand', 'left')
+  self.anim:changeAnim('stand', 'right')
 
   self.vel:add(self.global.gravity)
 
@@ -110,13 +120,13 @@ function Player(global, startx, starty)
 
     if self.global.keyhandle:check('left') then
       if self.vel.x > 0 then
-        self.vel.x = self.vel.x < -0.25 and self.vel.x * 0.9 or 0
+        self.vel.x = self.vel.x < -0.25 and self.vel.x * 0.5 or 0
       else
         self.vel:sub(self.xMove)
       end
     elseif self.global.keyhandle:check('right') then
       if self.vel.x < 0 then
-        self.vel.x = self.vel.x > 0.25 and self.vel.x * 0.9 or 0
+        self.vel.x = self.vel.x > 0.25 and self.vel.x * 0.5 or 0
       else
         self.vel:add(self.xMove)
       end
@@ -135,32 +145,36 @@ function Player(global, startx, starty)
   end
 
   self.collide = function(self, map)
-    local collideMap, countMap = map:collides(self.rect, self.vel)
-    if collideMap.down > 0 then
-      self.pos.y = self.pos.y - collideMap.down
-      self.vel.y = 0
-      self.jumping = false
+    local collideMap, countMap = map:collides(self.rect, self.vel, true)
+    if collideMap == 'death' then
+      self.global:loadMap()
     else
-      self.vel:add(self.global.gravity)
-    end
+      if collideMap.down > 0 then
+        self.pos.y = self.pos.y - collideMap.down
+        self.vel.y = 0
+        self.jumping = false
+      else
+        self.vel:add(self.global.gravity)
+      end
 
-    if collideMap.up > 0 then
-      self.pos.y = self.pos.y + collideMap.up
-      self.vel.y = 0
-    end
-    if collideMap.left > 0 then
-      self.pos.x = self.pos.x + collideMap.left
-      self.vel.x = 0
-    elseif collideMap.right > 0 then
-      self.pos.x = self.pos.x - collideMap.right
-      self.vel.x = 0
+      if collideMap.up > 0 then
+        self.pos.y = self.pos.y + collideMap.up
+        self.vel.y = 0
+      end
+      if collideMap.left > 0 then
+        self.pos.x = self.pos.x + collideMap.left
+        self.vel.x = 0
+      elseif collideMap.right > 0 then
+        self.pos.x = self.pos.x - collideMap.right
+        self.vel.x = 0
+      end
     end
 
     self:updateRect()
   end
 
   self.draw = function(self, x, y)
-    self.anim:draw(x or self.pos.x, y or self.pos.y)
+    self.anim:draw(math.floor(x or self.pos.x), math.floor(y or self.pos.y))
     --self.rect:draw('line', x + offset, y)
   end
 

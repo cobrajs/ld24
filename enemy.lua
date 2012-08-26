@@ -41,14 +41,15 @@ function BlueEnemy(global, startx, starty)
   self.collisionFuncs = {
     player = function(self, player, collideDepth, collideSide) 
       if collideSide == 'top' then 
-        print('GIT OFF MY HEAD!!') 
+        if player.attribs.weight > 1 then
+          self.remove = true
+        end
         player.jumping = true
         player.vel.y = -4
       end
     end,
     blue = function(self, blue) 
       self.vel.x = self.vel.x * -1
-      print("QUIT BUMPING INTO ME PLEASE") 
     end
   }
 
@@ -82,6 +83,7 @@ function BlueEnemy(global, startx, starty)
 
   self.draw = function(self, x, y)
     self.anim:draw(x or self.rect.x, y or self.rect.y)
+    --self.rect:draw('line', x, y)
   end
 
   return self

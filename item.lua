@@ -113,7 +113,7 @@ function Chicken(global, startx, starty)
 
   self.subtype = 'chicken'
   self.attribs.fat = -0.2
-  self.attribs.protein = 0.2
+  self.attribs.protein = 0.3
   self.attribs.fiber = -0.1
   self.attribs.spicy = 0
 

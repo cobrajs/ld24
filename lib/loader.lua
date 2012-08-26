@@ -46,6 +46,7 @@ function ParseMap(parsedXML)
   map.height = map.layers[1].height * map.tilesets.images[1].tileheight
   map.FindLayer = FindLayer
   map.FindObject = FindObject
+  map.FindObjects = FindObjects
 
   local getFrom = function(side, rect, x, y, width, height)
     if side == 'up' then
@@ -59,8 +60,9 @@ function ParseMap(parsedXML)
     end
   end
 
-  map.collides = function(self, rect, dir)
+  map.collides = function(self, rect, dir, reportDeath)
     local blank = '1'
+    local death = '6'
     local collideLayer = self.CollideLayer
     local ignoreCorners = rect.width >= self.tileWidth * 2
     local minx = math.max(math.floor((rect.x) / self.tileWidth), 0)
@@ -71,6 +73,7 @@ function ParseMap(parsedXML)
     local count = {up = 0, down = 0, left = 0, right = 0}
     for y = miny, maxy do
       for x = minx, maxx do
+        if reportDeath and collideLayer.grid[y + 1][x + 1] == death then return 'death' end
         if collideLayer.grid[y + 1][x + 1] ~= blank and (not ignoreCorners or not ((x == minx and y == miny) or (x == minx and y == maxy) or (x == maxx and y == miny) or (x == maxx and y == maxy))) then 
           --local isCorner = (x == minx and y == miny) or (x == minx and y == maxy) or (x == maxx and y == miny) or (x == maxx and y == maxy)
           --if ignoreCorners or not isCorner then
@@ -99,8 +102,7 @@ function ParseMap(parsedXML)
           else
             local side = 
               y == miny and 'up' or
-              y == maxy and 'down' or
-              x == minx and 'left' or
+              y == maxy and 'down' or x == minx and 'left' or
               x == maxx and 'right' or nil
 
             if side then
@@ -203,7 +205,7 @@ function ParseMap(parsedXML)
     if ret.up > 0 and dir.y >= 0 then ret.up = 0 end
     if ret.down > 0 and dir.y <= 0 then ret.down = 0 end
 
-    return ret, count
+    return ret, count, types
   end
 
   return map
@@ -219,6 +221,12 @@ function ParseObjectGroup(objgrp)
   a.objects = {}
   for i,v in ipairs(objects) do
     a.objects[i] = v.xarg
+    local properties = xml.FindAllInXML(v, 'property')
+    if #properties > 0 then
+      for _,prop in pairs(properties) do
+        a.objects[i][prop.xarg.name] = prop.xarg.value
+      end
+    end
   end
   return a
 end
@@ -301,7 +309,7 @@ function FindObjects(map, objType, objName)
   local ret = {}
   for i,objgroup in ipairs(map.objectgroups) do
     for _,obj in ipairs(objgroup.objects) do
-      if ((objName and obj.name and obj.name:lower() == objName:lower()) or not objName)  and obj.type and obj.type:lower() == objType:lower() then
+      if ((objName and obj.name and obj.name:lower() == objName:lower()) or not objName) and obj.type and obj.type:lower() == objType:lower() then
         table.insert(ret, obj)
       end
     end
