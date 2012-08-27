@@ -55,7 +55,8 @@ function loadMap(global, level)
       v.rect = {type = 'rect', x = tonumber(v.x), y = tonumber(v.y), width = tonumber(v.width), height = tonumber(v.height)}
       v.type = 'finish'
       global.collider:register(v, {v.rect}, {player = function(self, other)
-        global:loadMap()
+        --global:loadMap()
+        screens:switchScreen('end')
       end})
     end
   end
@@ -182,7 +183,18 @@ function love.load()
       love.graphics.setColor(255, 255, 255, 255)
     end
   })
-
+  screens:addScreen({
+    name = 'end',
+    global = global,
+    endImage = utils.loadImage('credits.png'),
+    enter = function(self) 
+      love.graphics.setBackgroundColor(0, 0, 0, 255)
+    end,
+    update = function(self, dt) end,
+    draw = function(self)
+      love.graphics.draw(self.endImage, 0, 0)
+    end
+  })
   screens:addScreen({
     name = 'game',
     global = global,
@@ -263,6 +275,9 @@ function love.keypressed(key)
   end
   if screens:onScreen('title') then
     screens:switchScreen('game')
+  end
+  if screens:onScreen('end') then
+    love.event.push('quit')
   end
   global.player:handleKeyPress(global.keyhandle.keys, key)
   global.keyhandle:update(key, true)
