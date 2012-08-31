@@ -2,8 +2,8 @@ module(..., package.seeall)
 
 assert(type(love) ~= nil, 'Love2D is required for this package')
 
-require 'xml'
-require 'utils'
+require 'lib.xml';xml = lib.xml
+require 'lib.utils';utils = lib.utils
 
 function KeyHandler(file)
   self = {}

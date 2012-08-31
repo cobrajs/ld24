@@ -1,7 +1,7 @@
 module(..., package.seeall)
 
-require 'utils'
-require 'vector'
+require 'lib.utils';utils = lib.utils
+require 'lib.vector';vector = lib.vector
 
 function Collection(global)
   local self = {

@@ -1,9 +1,9 @@
 module(..., package.seeall)
 
-require 'utils'
-require 'vector'
-require 'shapes'
-require 'animated'
+require 'lib.utils';utils = lib.utils
+require 'lib.vector';vector = lib.vector
+require 'lib.shapes';shapes = lib.shapes
+require 'lib.animated';animated = lib.animated
 
 local baseRemoveDelay = 0.5
 

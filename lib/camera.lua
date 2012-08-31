@@ -1,6 +1,6 @@
 module(..., package.seeall)
 
-require 'vector'
+require 'lib.vector';vector = lib.vector
 
 function Camera(maxWidth, maxHeight)
   self = vector.Vector:new(0,0)

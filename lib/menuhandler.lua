@@ -5,7 +5,7 @@ module(..., package.seeall)
 -- I was going to do an XML menu reader, but I'd have to assign functions to it anyway
 --
 
-require 'utils'
+require 'lib.utils';utils = lib.utils
 
 function MenuHandler(opts)
   assert(type(menu) == "table" or not menu, "Passed in menu must be a table of menu items, or nothing at all")

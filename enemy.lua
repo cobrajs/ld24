@@ -1,10 +1,10 @@
 module(..., package.seeall)
 
-require 'utils'
-require 'vector'
-require 'tileset'
-require 'shapes'
-require 'animated'
+require 'lib.utils';utils = lib.utils
+require 'lib.vector';vector = lib.vector
+require 'lib.tileset';tileset = lib.tileset
+require 'lib.shapes';shapes = lib.shapes
+require 'lib.animated';animated = lib.animated
 
 function Enemy(global, startx, starty)
   local self = {

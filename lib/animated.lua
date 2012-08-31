@@ -1,7 +1,7 @@
 module(..., package.seeall)
 
-require 'utils'
-require 'tileset'
+require 'lib.utils';utils = lib.utils
+require 'lib.tileset';tileset = lib.tileset
 
 function Animated(tilesetFile)
   local self = {}

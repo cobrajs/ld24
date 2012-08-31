@@ -6,18 +6,19 @@
 -- Libraries
 --
 -- Make it so I can store libraries in the lib folder
-package.path = package.path .. ';./lib/?.lua'
-require 'animated'
-require 'loader'
-require 'camera'
-require 'utils'
-require 'keyhandler'
-require 'logger'
-require 'collider'
-require 'collection'
-require 'screenhandler'
-require 'menuhandler'
-require 'hud'
+require 'lib.animated';animated = lib.animated
+require 'lib.loader';loader = lib.loader
+require 'lib.camera';camera = lib.camera
+require 'lib.utils';utils = lib.utils
+require 'lib.keyhandler';keyhandler = lib.keyhandler
+require 'lib.logger';logger = lib.logger
+require 'lib.collider';collider = lib.collider
+require 'lib.collection';collection = lib.collection
+require 'lib.screenhandler';screenhandler = lib.screenhandler
+require 'lib.menuhandler';menuhandler = lib.menuhandler
+require 'lib.hud';hud = lib.hud
+require 'lib.vector';vector = lib.vector
+require 'lib.tileset';tileset = lib.tileset
 
 ------------------------------------------------------------
 -- Game objects

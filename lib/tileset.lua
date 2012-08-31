@@ -1,6 +1,6 @@
 module(..., package.seeall)
 
-require 'utils'
+require 'lib.utils'
 
 --
 -- Inputs:

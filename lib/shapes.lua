@@ -1,7 +1,7 @@
 module(..., package.seeall)
 
-require 'utils'
-require 'vector'
+require 'lib.utils'
+require 'lib.vector'
 
 function Rect(x, y, width, height)
   self = vector.Vector:new(x,y)

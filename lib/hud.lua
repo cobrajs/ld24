@@ -1,6 +1,6 @@
 module(..., package.seeall)
 
-require 'utils'
+require 'lib.utils';utils = lib.utils
 
 function HUD(global, position, depth)
   local self = {

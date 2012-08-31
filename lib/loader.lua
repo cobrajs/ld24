@@ -3,7 +3,8 @@ module(..., package.seeall)
 --
 -- Loads Tiled maps
 --
-require 'utils' require 'xml'
+require 'lib.utils';utils = lib.utils 
+require 'lib.xml';xml = lib.xml
 
 function LoadMapLove(mapname)
   assert(type(love) ~= nil, 'Love2D is required for this function')
