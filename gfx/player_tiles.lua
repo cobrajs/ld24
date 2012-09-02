@@ -4,7 +4,7 @@ end
 
 return {
   tilesx = 8, tilesy = 8,
-  image = {source = "gfx/man.png", width = 256, height = 256},
+  image = "gfx/man.png",
   anims = {
     stand = {
       right = addState(1, 1, 0, 5),

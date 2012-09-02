@@ -61,7 +61,7 @@ function ParseMap(parsedXML)
     end
   end
 
-  map.collides = function(self, rect, dir, reportDeath)
+  map.collides = function(self, rect, dir, reportDeath, debug)
     local blank = '1'
     local death = '6'
     local collideLayer = self.CollideLayer
@@ -101,42 +101,60 @@ function ParseMap(parsedXML)
               count.right = count.right + 1
             end
           else
-            local side = 
-              y == miny and 'up' or
-              y == maxy and 'down' or x == minx and 'left' or
-              x == maxx and 'right' or nil
-
-            if side then
-              ret[side] = getFrom(side, rect, x, y, self.tileWidth, self.tileHeight)
-              count[side] = count[side] + 1
-              --print(side, x, y)
-            end
-          end
-            --[[
-          else
             if x == minx and y == miny then
-              ret.up = getFrom('up', rect, x, y, self.tileWidth, self.tileHeight)
-              count.up = count.up + 1
-              ret.left = getFrom('left', rect, x, y, self.tileWidth, self.tileHeight)
-              count.left = count.left + 1
+              -- Top Left
+              local tempX, tempY = math.abs(x * self.tileWidth + self.tileWidth - rect.x), math.abs(y * self.tileHeight + self.tileHeight - rect.y)
+              if tempX > tempY then
+                ret.up = getFrom('up', rect, x, y, self.tileWidth, self.tileHeight)
+                count.up = count.up + 1
+              else
+                ret.left = getFrom('left', rect, x, y, self.tileWidth, self.tileHeight)
+                count.left = count.left + 1
+              end
+              --print('ul', tempX, tempY)
             elseif x == minx and y == maxy then
-              ret.down = getFrom('down', rect, x, y, self.tileWidth, self.tileHeight)
-              count.down = count.down + 1
-              ret.left = getFrom('left', rect, x, y, self.tileWidth, self.tileHeight)
-              count.left = count.left + 1
+              local tempX, tempY = math.abs(x * self.tileWidth + self.tileWidth - rect.x), math.abs(rect.y + rect.height - y * self.tileHeight)
+              if tempX > tempY then
+                ret.down = getFrom('down', rect, x, y, self.tileWidth, self.tileHeight)
+                count.down = count.down + 1
+              else
+                ret.left = getFrom('left', rect, x, y, self.tileWidth, self.tileHeight)
+                count.left = count.left + 1
+              end
+              --print('dl', tempX, tempY)
             elseif x == maxx and y == miny then
-              ret.up = getFrom('up', rect, x, y, self.tileWidth, self.tileHeight)
-              count.up = count.up + 1
-              ret.right = getFrom('right', rect, x, y, self.tileWidth, self.tileHeight)
-              count.right = count.right + 1
+              local tempX, tempY = math.abs(rect.x + rect.width - x * self.tileWidth), math.abs(y * self.tileHeight + self.tileHeight - rect.y)
+              if tempX > tempY then
+                ret.up = getFrom('up', rect, x, y, self.tileWidth, self.tileHeight)
+                count.up = count.up + 1
+              else
+                ret.right = getFrom('right', rect, x, y, self.tileWidth, self.tileHeight)
+                count.right = count.right + 1
+              end
+              --print('ur', tempX, tempY)
             elseif x == maxx and y == maxy then
-              ret.down = getFrom('down', rect, x, y, self.tileWidth, self.tileHeight)
-              count.down = count.down + 1
-              ret.right = getFrom('right', rect, x, y, self.tileWidth, self.tileHeight)
-              count.right = count.right + 1
+              local tempX, tempY = math.abs(rect.x + rect.width - x * self.tileWidth), math.abs(rect.y + rect.height - y * self.tileHeight)
+              if tempX > tempY then
+                ret.down = getFrom('down', rect, x, y, self.tileWidth, self.tileHeight)
+                count.down = count.down + 1
+              else
+                ret.right = getFrom('right', rect, x, y, self.tileWidth, self.tileHeight)
+                count.right = count.right + 1
+              end
+              --print('dr', tempX, tempY)
+            else
+              local side = 
+                y == miny and 'up' or
+                y == maxy and 'down' or x == minx and 'left' or
+                x == maxx and 'right' or nil
+
+              if side then
+                ret[side] = getFrom(side, rect, x, y, self.tileWidth, self.tileHeight)
+                count[side] = count[side] + 1
+                --print(side, x, y)
+              end
             end
           end
-          --]]
         end
       end
     end

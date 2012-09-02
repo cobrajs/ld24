@@ -62,7 +62,7 @@ function LuaTileset(luasource)
     end
   })()
   if type(tileset) == 'table' then
-    local self = Tileset(tileset.image.source, tileset.tilesx, tileset.tilesy)
+    local self = Tileset(tileset.image, tileset.tilesx, tileset.tilesy)
     self.anims = tileset.anims
     return self
   else

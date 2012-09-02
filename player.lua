@@ -112,9 +112,9 @@ function Player(global, startx, starty)
       end
     else
       if self.vel.y < 0 then 
-        self.anim:changeAnim('jump', self.vel.x > 0 and 'right' or 'left')
+        self.anim:changeAnim('jump', self.vel.x > 0 and 'right' or self.vel.x < 0 and 'left' or nil)
       else
-        self.anim:changeAnim('fall', self.vel.x > 0 and 'right' or 'left')
+        self.anim:changeAnim('fall', self.vel.x > 0 and 'right' or self.vel.x < 0 and 'left' or nil)
       end
     end
 
@@ -145,10 +145,14 @@ function Player(global, startx, starty)
   end
 
   self.collide = function(self, map)
-    local collideMap, countMap = map:collides(self.rect, self.vel, true)
+    --print('PLAYER COLLIDES')
+    local collideMap, countMap = map:collides(self.rect, self.vel, true, true)
     if collideMap == 'death' then
       self.global:loadMap()
     else
+      --utils.printTable(collideMap)
+      --utils.printTable(countMap)
+      --print()
       if collideMap.down > 0 then
         self.pos.y = self.pos.y - collideMap.down
         self.vel.y = 0

@@ -1,6 +1,6 @@
 return {
   tilesx = 8, tilesy = 8,
-  image = {source = "gfx/collects.png", width = 128, height = 128},
+  image = "gfx/collects.png",
   anims = {
     cake = {
       normal = addState(1,1,0,10)
