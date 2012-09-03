@@ -7,7 +7,7 @@ require 'lib.animated';animated = lib.animated
 
 local baseRemoveDelay = 0.5
 
-types = {'Cake', 'Carrot', 'Chicken'}
+types = {'Cake', 'Carrot', 'Chicken', 'Chile'}
 
 function Item(global, startx, starty)
   local self = {
@@ -127,9 +127,9 @@ function Chile(global, startx, starty)
 
   self.subtype = 'chile'
   self.attribs.fat = -0.2
-  self.attribs.protein = 0.2
-  self.attribs.fiber = -0.1
-  self.attribs.spicy = 0
+  self.attribs.protein = 0
+  self.attribs.fiber = 0.1
+  self.attribs.spicy = 1
 
   self.anim:changeAnim(self.subtype, 'normal')
 

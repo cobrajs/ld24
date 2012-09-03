@@ -10,6 +10,9 @@ return {
     },
     chicken = {
       normal = addState(3,3,0,10)
+    },
+    chile = {
+      normal = addState(4,4,0,10)
     }
   }
 }
