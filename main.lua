@@ -91,6 +91,11 @@ function love.load()
   screens:addScreen({
     name = 'game',
     global = global,
+    lastCamX = nil,
+    lastCamY = nil,
+    updateTiles = false,
+    back = love.graphics.newCanvas(love.graphics.getWidth() + global.map.tileWidth, love.graphics.getHeight() + global.map.tileHeight),
+    front = love.graphics.newCanvas(love.graphics.getWidth() + global.map.tileWidth, love.graphics.getHeight() + global.map.tileHeight),
     enter = function(self) 
       self.global.loadMap(self.global, self.global.currentLevel)
     end,
@@ -113,15 +118,32 @@ function love.load()
         math.floor(-self.global.player.pos.x + self.global.center.x),
         math.floor(-self.global.player.pos.y + self.global.center.y)
       )
+
+      local currentX, currentY = math.floor(math.abs(self.global.camera.x) / self.global.map.tileWidth), math.floor(math.abs(self.global.camera.y) / self.global.map.tileHeight)
+      if currentX ~= self.lastCamX or currentY ~= self.lastCamY then
+        self.lastCamX, self.lastCamY = currentX, currentY
+        self.updateTiles = true
+      end
     end,
     draw = function(self)
-      for tile, x, y in loader.tileIter(self.global.camera, self.global.map.DisplayBackLayer, self.global.map.tilesets.images[1]) do
-        tile = tonumber(tile)
-        local usetile = self.global.map.tilesets.tiles[tonumber(tile)]
-        if usetile and tile > 1 then
-          usetile.image.image:draw(x, y, tonumber(tile))
+      local cameraOffsetX, cameraOffsetY = 
+        self.global.camera.x + math.floor(-self.global.camera.x / self.global.map.tileWidth) * self.global.map.tileWidth, 
+        self.global.camera.y + math.floor(-self.global.camera.y / self.global.map.tileHeight) * self.global.map.tileHeight
+      if self.updateTiles then
+        self.updateTiles = false
+        love.graphics.setCanvas(self.back)
+        love.graphics.clear()
+        for tile, x, y in loader.tileIter(self.global.camera, self.global.map.DisplayBackLayer, self.global.map.tilesets.images[1]) do
+          tile = tonumber(tile)
+          local usetile = self.global.map.tilesets.tiles[tonumber(tile)]
+          if usetile and tile > 1 then
+            usetile.image.image:draw(x - cameraOffsetX, y - cameraOffsetY, tonumber(tile))
+          end
         end
+        love.graphics.setCanvas()
+
       end
+      love.graphics.draw(self.back, cameraOffsetX, cameraOffsetY)
 
       self.global.player:draw(self.global.camera:drawPlayer(self.global.player.pos.x, self.global.player.pos.y))
 
